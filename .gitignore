@@ -81,6 +81,11 @@ x86/
 # Visual Studio cache/options directory
 .vs/
 
+# JetBrains Rider
+.idea/
+*.sln.iml
+*.DotSettings.user
+
 # MSTest test Results
 [Tt]est[Rr]esult*/
 [Bb]uild[Ll]og.*

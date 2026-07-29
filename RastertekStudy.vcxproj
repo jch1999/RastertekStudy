@@ -123,20 +123,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="framework.h" />
-    <ClInclude Include="RastertekStudy.h" />
-    <ClInclude Include="Resource.h" />
-    <ClInclude Include="targetver.h" />
+    <ClCompile Include="applicationclass.cpp" />
+    <ClCompile Include="d3dclass.cpp" />
+    <ClCompile Include="inputclass.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="systemclass.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="RastertekStudy.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="RastertekStudy.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="RastertekStudy.ico" />
-    <Image Include="small.ico" />
+    <ClInclude Include="applicationclass.h" />
+    <ClInclude Include="d3dclass.h" />
+    <ClInclude Include="inputclass.h" />
+    <ClInclude Include="systemclass.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
