@@ -2,14 +2,14 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Filename: applicationclass.h
 ////////////////////////////////////////////////////////////////////////////////
-#ifndef _APPLICATIONCLASS_H_
-#define _APPLICATIONCLASS_H_
 
 ///////////////////////
 // MY CLASS INCLUDES //
 ///////////////////////
 #include "d3dclass.h"
-
+#include "cameraclass.h"
+#include "modelclass.h"
+#include "colorshaderclass.h"
 //////////////
 // INCLUDES //
 //////////////
@@ -44,6 +44,7 @@ private:
 
 private:
 	D3DClass* m_Direct3D;
+	CameraClass* m_Camera;
+	ModelClass* m_Model;
+	ColorShaderClass* m_ColorShader;
 };
-
-#endif
