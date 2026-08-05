@@ -9,7 +9,8 @@ ApplicationClass::ApplicationClass()
 	m_Direct3D = 0;
 	m_Camera = 0;
 	m_Model = 0;
-	m_ColorShader = 0;
+	// m_ColorShader = 0;
+	m_TextureShader = 0;
 }
 
 
@@ -25,12 +26,16 @@ ApplicationClass::~ApplicationClass()
 
 bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 {
-
+	char textureFileName[128];
 	bool result;
 
 	// Direct3D 객체 생성 및 초기화
 	m_Direct3D = new D3DClass;
-
+	if(!m_Direct3D)
+	{
+		return false;
+	}
+	
 	result = m_Direct3D->Initialize(screenWidth, screenHeight, VSYNC_ENABLED, hwnd, FULL_SCREEN, SCREEN_DEPTH, SCREEN_NEAR);
 	if (!result)
 	{
@@ -47,17 +52,19 @@ bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 	// 모델 생성 및 초기화
 	m_Model = new ModelClass;
 	
-	result = m_Model->Initialize(m_Direct3D->GetDevice());
+	strcpy_s(textureFileName, "data/stone01.tga");
+	
+	result = m_Model->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), textureFileName);
 	if (!result)
 	{
 		MessageBox(hwnd, L"Could not initialize this model object.", L"Error", MB_OK);
 		return false;
 	}
 	
-	// 컬러 셰이더 객체 생성 및 초기화
-	m_ColorShader = new ColorShaderClass;
+	// 텍스처 셰이더 객체 생성 및 초기화
+	m_TextureShader  = new TextureShaderClass;
 	
-	result = m_ColorShader->Initialize(m_Direct3D->GetDevice(), hwnd);
+	result = m_TextureShader->Initialize(m_Direct3D->GetDevice(), hwnd);
 	if (!result)
 	{
 		MessageBox(hwnd, L"Could not initialize this color shader object.", L"Error", MB_OK);
@@ -70,11 +77,11 @@ bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 void ApplicationClass::Shutdown()
 {
 	// Color Shader 객체 해제
-	if (m_ColorShader)
+	if (m_TextureShader)
 	{
-		m_ColorShader->Shutdown();
-		delete m_ColorShader;
-		m_ColorShader = 0;
+		m_TextureShader->Shutdown();
+		delete m_TextureShader;
+		m_TextureShader = 0;
 	}
 	
 	// model 객체 해제
@@ -138,8 +145,8 @@ bool ApplicationClass::Render()
 	// 모델의 버택스 & 인데스 버퍼를 파이프라인에 넣어 그리기 준비하기
 	m_Model->Render(m_Direct3D->GetDeviceContext());
 	
-	// 컬러 셰이더를 사용해서 모델 렌덜하기
-	result = m_ColorShader->Render(m_Direct3D->GetDeviceContext(), m_Model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix);
+	// 텍스처 셰이더를 사용해서 모델 렌덜하기
+	result = m_TextureShader->Render(m_Direct3D->GetDeviceContext(), m_Model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix, m_Model->GetTexture());
 	if (!result)
 	{
 		return false;
