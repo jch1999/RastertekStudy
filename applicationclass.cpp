@@ -10,7 +10,9 @@ ApplicationClass::ApplicationClass()
 	m_Camera = 0;
 	m_Model = 0;
 	// m_ColorShader = 0;
-	m_TextureShader = 0;
+	// m_TextureShader = 0;
+	m_LightShader = 0;
+	m_Light = 0;
 }
 
 
@@ -61,27 +63,40 @@ bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 		return false;
 	}
 	
-	// 텍스처 셰이더 객체 생성 및 초기화
-	m_TextureShader  = new TextureShaderClass;
+	// 라이트 셰이더 객체 생성 및 초기화
+	m_LightShader   = new LightShaderClass;
 	
-	result = m_TextureShader->Initialize(m_Direct3D->GetDevice(), hwnd);
+	result = m_LightShader->Initialize(m_Direct3D->GetDevice(), hwnd);
 	if (!result)
 	{
-		MessageBox(hwnd, L"Could not initialize this color shader object.", L"Error", MB_OK);
+		MessageBox(hwnd, L"Could not initialize this light shader object.", L"Error", MB_OK);
 		return false;
 	}
+	
+	// 라이트 오브젝트 생성 및 초기화
+	m_Light = new LightClass;
+	
+	m_Light->SetDiffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
+	m_Light->SetDirection(0.0f, 0.0f, 1.0f);
 	
 	return true;
 }
 
 void ApplicationClass::Shutdown()
 {
-	// Color Shader 객체 해제
-	if (m_TextureShader)
+	// 라이트 오브젝트 해제
+	if (m_Light)
 	{
-		m_TextureShader->Shutdown();
-		delete m_TextureShader;
-		m_TextureShader = 0;
+		delete m_Light;
+		m_Light = 0;
+	}
+	
+	// Light Shader 객체 해제
+	if (m_LightShader)
+	{
+		m_LightShader->Shutdown();
+		delete m_LightShader;
+		m_LightShader = 0;
 	}
 	
 	// model 객체 해제
@@ -113,10 +128,18 @@ void ApplicationClass::Shutdown()
 
 bool ApplicationClass::Frame()
 {
+	static float rotation = 0.0f;
 	bool result;
 
+	// 각 프레임별 rotation 변수 갱신
+	rotation -= 0.0174532925f * 0.1f;
+	if (rotation < 0.0f)
+	{
+		rotation += 360.0f;
+	}
+	
 	// 그래픽 씬 랜더
-	result = Render();
+	result = Render(rotation);
 	if (!result)
 	{
 		return false;
@@ -126,7 +149,7 @@ bool ApplicationClass::Frame()
 }
 
 
-bool ApplicationClass::Render()
+bool ApplicationClass::Render(float rotation)
 {
 	XMMATRIX worldMatrix, viewMatrix, projectionMatrix;
 	bool result;
@@ -142,11 +165,14 @@ bool ApplicationClass::Render()
 	m_Camera->GetViewMatrix(viewMatrix);
 	m_Direct3D->GetProjectionMatrix(projectionMatrix);
 	
+	// rotation값에 따라 삼각형이 돌아야하는 만큼 월드 매트릭스 회전하기
+	worldMatrix = XMMatrixRotationY(rotation);
+	
 	// 모델의 버택스 & 인데스 버퍼를 파이프라인에 넣어 그리기 준비하기
 	m_Model->Render(m_Direct3D->GetDeviceContext());
 	
 	// 텍스처 셰이더를 사용해서 모델 렌덜하기
-	result = m_TextureShader->Render(m_Direct3D->GetDeviceContext(), m_Model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix, m_Model->GetTexture());
+	result = m_LightShader->Render(m_Direct3D->GetDeviceContext(), m_Model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix, m_Model->GetTexture(), m_Light->GetDirection(), m_Light->GetDiffuseColor());
 	if (!result)
 	{
 		return false;
