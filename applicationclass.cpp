@@ -29,6 +29,7 @@ ApplicationClass::~ApplicationClass()
 bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 {
 	char textureFileName[128];
+	char modelFileName[128];
 	bool result;
 
 	// Direct3D 객체 생성 및 초기화
@@ -51,12 +52,16 @@ bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 	// 카메라 초기 위치 설정
 	m_Camera->SetPostion(0.0f, 0.0f,-5.0f);
 	
+	// 모델 파일 이름을 설정한다.
+	strcpy_s(modelFileName, "data/cube.txt");
+	
+	// 로드할 텍스처 파일의 이름을 설정한다.
+	strcpy_s(textureFileName, "data/stone01.tga");
+	
 	// 모델 생성 및 초기화
 	m_Model = new ModelClass;
 	
-	strcpy_s(textureFileName, "data/stone01.tga");
-	
-	result = m_Model->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), textureFileName);
+	result = m_Model->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), textureFileName, modelFileName);
 	if (!result)
 	{
 		MessageBox(hwnd, L"Could not initialize this model object.", L"Error", MB_OK);
