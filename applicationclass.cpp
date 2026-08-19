@@ -50,7 +50,7 @@ bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 	m_Camera = new CameraClass;
 	
 	// 카메라 초기 위치 설정
-	m_Camera->SetPostion(0.0f, 0.0f,-5.0f);
+	m_Camera->SetPostion(0.0f, 0.0f,-10.0f);
 	
 	// 모델 파일 이름을 설정한다.
 	strcpy_s(modelFileName, "data/cube.txt");
@@ -156,7 +156,7 @@ bool ApplicationClass::Frame()
 
 bool ApplicationClass::Render(float rotation)
 {
-	XMMATRIX worldMatrix, viewMatrix, projectionMatrix;
+	XMMATRIX worldMatrix, viewMatrix, projectionMatrix, srMatrix;
 	bool result;
 	
 	// 씬 시작을 위해 버퍼 비우기
@@ -170,8 +170,14 @@ bool ApplicationClass::Render(float rotation)
 	m_Camera->GetViewMatrix(viewMatrix);
 	m_Direct3D->GetProjectionMatrix(projectionMatrix);
 	
-	// rotation값에 따라 삼각형이 돌아야하는 만큼 월드 매트릭스 회전하기
-	worldMatrix = XMMatrixRotationY(rotation);
+	scaleMatrix = XMMatrixScaling(0.5f, 0.5f, 0.5f);
+	rotationMatrix = XMMatrixRotationY(rotation); // 회전 행렬을 만든다.
+	translationMatrix = XMMatrixTranslation(-2.0f, 0.0f, 0.0f); // 이동 행렬을 만든다.
+	
+	// 이들을 곱해 최종 월드 변환 행렬을 만든다.
+	// worldMatrix = XMMatrixMultiply(rotationMatrix, translationMatrix);
+	srMatrix = XMMatrixMultiply(scaleMatrix, rotationMatrix);
+	worldMatrix = XMMatrixMultiply(srMatrix, translationMatrix);
 	
 	// 모델의 버택스 & 인데스 버퍼를 파이프라인에 넣어 그리기 준비하기
 	m_Model->Render(m_Direct3D->GetDeviceContext());

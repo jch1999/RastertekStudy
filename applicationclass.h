@@ -54,4 +54,8 @@ private:
 	// TextureShaderClass* m_TextureShader;
 	LightShaderClass* m_LightShader;
 	LightClass* m_Light;
+	
+	XMMATRIX scaleMatrix;
+	XMMATRIX rotationMatrix;
+	XMMATRIX translationMatrix;
 };
