@@ -170,9 +170,26 @@ bool ApplicationClass::Render(float rotation)
 	m_Camera->GetViewMatrix(viewMatrix);
 	m_Direct3D->GetProjectionMatrix(projectionMatrix);
 	
-	scaleMatrix = XMMatrixScaling(0.5f, 0.5f, 0.5f);
 	rotationMatrix = XMMatrixRotationY(rotation); // 회전 행렬을 만든다.
 	translationMatrix = XMMatrixTranslation(-2.0f, 0.0f, 0.0f); // 이동 행렬을 만든다.
+	
+	// 이들을 곱해 최종 월드 변환 행렬을 만든다.
+	worldMatrix = XMMatrixMultiply(rotationMatrix, translationMatrix);
+
+	// 모델의 버택스 & 인데스 버퍼를 파이프라인에 넣어 그리기 준비하기
+	m_Model->Render(m_Direct3D->GetDeviceContext());
+
+	// 텍스처 셰이더를 사용해서 모델 렌덜하기
+	result = m_LightShader->Render(m_Direct3D->GetDeviceContext(), m_Model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix, m_Model->GetTexture(),
+								   m_Light->GetDirection(), m_Light->GetDiffuseColor());
+	if(!result)
+	{
+		return false;
+	}
+	
+	scaleMatrix = XMMatrixScaling(0.5f, 0.5f, 0.5f);
+	rotationMatrix = XMMatrixRotationY(rotation); // 회전 행렬을 만든다.
+	translationMatrix = XMMatrixTranslation(2.0f, 0.0f, 0.0f); // 이동 행렬을 만든다.
 	
 	// 이들을 곱해 최종 월드 변환 행렬을 만든다.
 	// worldMatrix = XMMatrixMultiply(rotationMatrix, translationMatrix);
