@@ -81,6 +81,7 @@ bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 	// 라이트 오브젝트 생성 및 초기화
 	m_Light = new LightClass;
 	
+	m_Light->SetAmbientColor(0.15f, 0.15f, 0.15f, 1.0f);
 	m_Light->SetDiffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
 	m_Light->SetDirection(0.0f, 0.0f, 1.0f);
 	
@@ -181,7 +182,7 @@ bool ApplicationClass::Render(float rotation)
 
 	// 텍스처 셰이더를 사용해서 모델 렌덜하기
 	result = m_LightShader->Render(m_Direct3D->GetDeviceContext(), m_Model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix, m_Model->GetTexture(),
-								   m_Light->GetDirection(), m_Light->GetDiffuseColor());
+								   m_Light->GetDirection(), m_Light->GetAmbientColor(), m_Light->GetDiffuseColor());
 	if(!result)
 	{
 		return false;
@@ -200,7 +201,7 @@ bool ApplicationClass::Render(float rotation)
 	m_Model->Render(m_Direct3D->GetDeviceContext());
 	
 	// 텍스처 셰이더를 사용해서 모델 렌덜하기
-	result = m_LightShader->Render(m_Direct3D->GetDeviceContext(), m_Model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix, m_Model->GetTexture(), m_Light->GetDirection(), m_Light->GetDiffuseColor());
+	result = m_LightShader->Render(m_Direct3D->GetDeviceContext(), m_Model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix, m_Model->GetTexture(), m_Light->GetDirection(), m_Light->GetAmbientColor(), m_Light->GetDiffuseColor());
 	if (!result)
 	{
 		return false;
