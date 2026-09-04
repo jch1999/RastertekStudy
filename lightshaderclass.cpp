@@ -10,7 +10,9 @@ LightShaderClass::LightShaderClass()
     m_layout = 0;
     m_matrixBuffer = 0;
 	m_samplerState = 0;
-    m_lightBuffer = 0;
+    // m_lightBuffer = 0;
+    m_lightColorBuffer = 0;
+    m_lightPositionBuffer = 0;
 }
 
 LightShaderClass::LightShaderClass(const LightShaderClass&)
@@ -61,12 +63,13 @@ void LightShaderClass::Shutdown()
 }
 
 bool LightShaderClass::Render(ID3D11DeviceContext* deviceContext, 
-    int indexCount, XMMATRIX worldMatrix, XMMATRIX viewMatrix, XMMATRIX projectionMatrix, ID3D11ShaderResourceView* texture, XMFLOAT3 lightDirection, XMFLOAT4 ambientColor, XMFLOAT4 diffuseColor, XMFLOAT3 cameraPosition, XMFLOAT4 specularColor, float specularPower)
+    int indexCount, XMMATRIX worldMatrix, XMMATRIX viewMatrix, XMMATRIX projectionMatrix, ID3D11ShaderResourceView* texture, /*XMFLOAT3 lightDirection, XMFLOAT4 ambientColor, XMFLOAT4 diffuseColor, XMFLOAT3 cameraPosition, XMFLOAT4 specularColor, float specularPower*/ XMFLOAT4 diffuseColor[], XMFLOAT4 lightPosition[])
 {
     bool result;
     
     // 랜더링에 사용되는 셰이더 파라매터 셋팅
-    result = SetShaderParameters(deviceContext, worldMatrix, viewMatrix, projectionMatrix, texture, lightDirection, ambientColor, diffuseColor, cameraPosition, specularColor, specularPower);
+    result = SetShaderParameters(deviceContext, worldMatrix, viewMatrix, projectionMatrix, texture, /*lightDirection, ambientColor, diffuseColor, cameraPosition, specularColor, specularPower*/
+        diffuseColor, lightPosition);
     if (!result)
     {
         return false;
@@ -88,8 +91,10 @@ bool LightShaderClass::InitializeShader(ID3D11Device* device, HWND hwnd, WCHAR* 
     unsigned int numElements;
     D3D11_BUFFER_DESC matrixBufferDesc;
     D3D11_SAMPLER_DESC samplerDesc;
-    D3D11_BUFFER_DESC cameraBufferDesc;
-    D3D11_BUFFER_DESC lightBufferDesc;
+    // D3D11_BUFFER_DESC cameraBufferDesc;
+    // D3D11_BUFFER_DESC lightBufferDesc;
+    D3D11_BUFFER_DESC lightColorBufferDesc;
+    D3D11_BUFFER_DESC lightPositionBufferDesc;
     
     // 이 함수가 사용할 포인터를 null로 초기화
     errorMessage = 0;
@@ -231,7 +236,7 @@ bool LightShaderClass::InitializeShader(ID3D11Device* device, HWND hwnd, WCHAR* 
         return false;
     }
     
-    // 정점 셰이더에 있는 동적 카메라 상수 버퍼의 설명 구조체를 설정한다.
+    /*// 정점 셰이더에 있는 동적 카메라 상수 버퍼의 설명 구조체를 설정한다.
     cameraBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
     cameraBufferDesc.ByteWidth = sizeof(CameraBufferType);
     cameraBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
@@ -261,8 +266,38 @@ bool LightShaderClass::InitializeShader(ID3D11Device* device, HWND hwnd, WCHAR* 
     if (FAILED(result))
     {
         return false;
+    }*/
+    
+    // 픽셀 셰이더에 사용할 동적 상수 버퍼의 설명 구조체를 생성
+    lightColorBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+    lightColorBufferDesc.ByteWidth = sizeof(LightColorBufferType);
+    lightColorBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    lightColorBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    lightColorBufferDesc.MiscFlags = 0;
+    lightColorBufferDesc.StructureByteStride = 0;
+    
+    // 이 클래스로부터 픽셀 셰이더 상수 버퍼에 접근 가능하게 상수 버퍼 포인터 생성
+    result = device->CreateBuffer(&lightColorBufferDesc, NULL, &m_lightColorBuffer);
+    if (FAILED(result))
+    {
+        return false;
     }
     
+    // 픽셀 셰이더에 사용할 동적 상수 버퍼의 설명 구조체를 생성
+    lightPositionBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+    lightPositionBufferDesc.ByteWidth = sizeof(LightPositionBufferType);
+    lightPositionBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    lightPositionBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    lightPositionBufferDesc.MiscFlags = 0;
+    lightPositionBufferDesc.StructureByteStride = 0;
+
+    // 이 클래스로부터 픽셀 셰이더 상수 버퍼에 접근 가능하게 상수 버퍼 포인터 생성
+    result = device->CreateBuffer(&lightPositionBufferDesc, NULL, &m_lightPositionBuffer);
+    if(FAILED(result))
+    {
+        return false;
+    }
+
     return true;
 }
 
@@ -270,6 +305,19 @@ bool LightShaderClass::InitializeShader(ID3D11Device* device, HWND hwnd, WCHAR* 
 void LightShaderClass::ShutdownShader()
 {
     // 라이트 상수 버퍼 해제
+    if(m_lightColorBuffer)
+    {
+        m_lightColorBuffer->Release();
+        m_lightColorBuffer = 0;
+    }
+
+    if(m_lightPositionBuffer)
+    {
+        m_lightPositionBuffer->Release();
+        m_lightPositionBuffer = 0;
+    }
+    
+    /*// 라이트 상수 버퍼 해제
     if (m_lightBuffer)
     {
         m_lightBuffer->Release();
@@ -281,7 +329,7 @@ void LightShaderClass::ShutdownShader()
     {
         m_cameraBuffer->Release();
         m_cameraBuffer = 0;
-    }
+    }*/
     
     // 샘플러 상태 객체 해제.
     if (m_samplerState)
@@ -357,13 +405,16 @@ void LightShaderClass::OutputShaderErrorMessage(ID3D10Blob* errorMessage, HWND h
 
 bool LightShaderClass::SetShaderParameters(ID3D11DeviceContext* deviceContext, 
     XMMATRIX worldMatrix, XMMATRIX viewMatrix, XMMATRIX projectionMatrix,
-    ID3D11ShaderResourceView* texture, XMFLOAT3 lightDirection, XMFLOAT4 ambientColor, XMFLOAT4 diffuseColor, XMFLOAT3 cameraPosition, XMFLOAT4 specularColor, float specularPower)
+    ID3D11ShaderResourceView* texture, /*XMFLOAT3 lightDirection, XMFLOAT4 ambientColor, XMFLOAT4 diffuseColor, XMFLOAT3 cameraPosition, XMFLOAT4 specularColor, float specularPower*/ 
+    XMFLOAT4 diffuseColor[], XMFLOAT4 lightPosition[])
 {
     HRESULT result;
     D3D11_MAPPED_SUBRESOURCE mappedResource;
     MatrixBufferType* dataPtr;
-    LightBufferType* dataPtr2;
-    CameraBufferType* dataPtr3;
+    // LightBufferType* dataPtr2;
+    // CameraBufferType* dataPtr3;
+    LightPositionBufferType* dataPtr2;
+    LightColorBufferType* dataPtr3;
     unsigned int bufferNumber;
     
     // 셰이더에 사용하기 위해 행렬들을 전치시킨다
@@ -395,7 +446,7 @@ bool LightShaderClass::SetShaderParameters(ID3D11DeviceContext* deviceContext,
     // 마침내 버택스 셰이더에 업그래이드된 값의 상수 버퍼를 설정한다.
     deviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_matrixBuffer);
     
-    // 카메라 상수 버퍼에 쓸 수 있도록 잠근다.
+    /*// 카메라 상수 버퍼에 쓸 수 있도록 잠근다.
     result = deviceContext->Map(m_cameraBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
     if (FAILED(result))
     {
@@ -418,6 +469,7 @@ bool LightShaderClass::SetShaderParameters(ID3D11DeviceContext* deviceContext,
     
     // 픽셀 셰이더에 셰이더 텍스처 리소스를 설정한다.
     deviceContext->PSSetShaderResources(0, 1, &texture);
+    
     
     // 라이트 상수 버퍼가 쓰기가 가능한 상태인지 확인하기
     result = deviceContext->Map(m_lightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
@@ -444,6 +496,56 @@ bool LightShaderClass::SetShaderParameters(ID3D11DeviceContext* deviceContext,
     
     // 마지막으로 업데이트된 값으로 픽셀 셰이더내의 라이트 상수 버퍼 설정하기
     deviceContext->PSSetConstantBuffers(bufferNumber, 1, &m_lightBuffer);
+    */
+    result = deviceContext->Map(m_lightPositionBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+    if (FAILED(result))
+    {
+        return false;
+    }
+    // 상수 버퍼 내부 데이터 포인터를 얻는다.
+    dataPtr2 = (LightPositionBufferType*)mappedResource.pData;
+    
+    // 조명 위치 변수들을 상수 버퍼에 복사한다.
+    dataPtr2->lightPosition[0] = lightPosition[0];
+    dataPtr2->lightPosition[1] = lightPosition[1];
+    dataPtr2->lightPosition[2] = lightPosition[2];
+    dataPtr2->lightPosition[3] = lightPosition[3];
+    
+    // 상수 버퍼의 잠금을 해제한다.
+    deviceContext->Unmap(m_lightPositionBuffer, 0);
+    
+    // 정점 셰이더에서 상수 버퍼 위치를 설정한다.
+    bufferNumber = 1;
+    
+    // 마지막으로 갱신된 값으로 정점 셰이더의 상수 버퍼를 설정한다.
+    deviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_lightPositionBuffer);
+    
+    // 픽셀 셰이더에서 텍스처 리소소를 설정한다.
+    deviceContext->PSSetShaderResources(0, 1, &texture);
+    
+    // 조명 색 상수 버퍼에 쓸 수 있도록 잠근다.
+    result = deviceContext->Map(m_lightColorBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+    if (FAILED(result))
+    {
+        return false;
+    }
+    
+    // 상수 버퍼 내부 데이터의 포인터를 얻는다.
+    dataPtr3 = (LightColorBufferType*)mappedResource.pData;
+    
+    // 조명 색 변수들을 상수 버퍼에 복사한다.
+    dataPtr3->diffuseColor[0] = diffuseColor[0];
+    dataPtr3->diffuseColor[1] = diffuseColor[1];
+    dataPtr3->diffuseColor[2] = diffuseColor[2];
+    dataPtr3->diffuseColor[3] = diffuseColor[3];
+    
+    // 상수 버퍼의 잠근을 해제한다.
+    deviceContext->Unmap(m_lightColorBuffer, 0);
+    // 픽셀 셰이더에서 상수 버퍼의 위치를 설정한다.
+    bufferNumber = 0;
+
+    // 마지막으로 갱신된 값으로 픽셀 셰이더의 상수 버퍼를 설정한다.
+	deviceContext->PSSetConstantBuffers(bufferNumber, 1, &m_lightColorBuffer);
     
     return true;
 }

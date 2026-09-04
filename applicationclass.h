@@ -44,7 +44,7 @@ public:
 	bool Frame();
 
 private:
-	bool Render(float);
+	bool Render(/*float*/);
 
 private:
 	D3DClass* m_Direct3D;
@@ -53,7 +53,8 @@ private:
 	// ColorShaderClass* m_ColorShader;
 	// TextureShaderClass* m_TextureShader;
 	LightShaderClass* m_LightShader;
-	LightClass* m_Light;
+	LightClass* m_Lights;
+	int m_numLights;
 	
 	XMMATRIX scaleMatrix;
 	XMMATRIX rotationMatrix;
