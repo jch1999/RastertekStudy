@@ -8,11 +8,13 @@ ApplicationClass::ApplicationClass()
 {
 	m_Direct3D = 0;
 	m_Camera = 0;
-	m_Model = 0;
+	// m_Model = 0;
 	// m_ColorShader = 0;
 	// m_TextureShader = 0;
-	m_LightShader = 0;
-	m_Lights = 0;
+	// m_LightShader = 0;
+	// m_Lights = 0;
+	m_TextureShader = 0;
+	m_Bitmap = 0;
 }
 
 
@@ -29,7 +31,8 @@ ApplicationClass::~ApplicationClass()
 bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 {
 	char textureFileName[128];
-	char modelFileName[128];
+	//char modelFileName[128];
+	char bitmapFilename[128];
 	bool result;
 
 	// Direct3D 객체 생성 및 초기화
@@ -50,17 +53,19 @@ bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 	m_Camera = new CameraClass;
 	
 	// 카메라 초기 위치 설정
-	m_Camera->SetPostion(0.0f, 5.0f,-12.0f);
-	m_Camera->SetRotation(22.0f, 0.0f, 0.0f);
+	/*m_Camera->SetPostion(0.0f, 5.0f,-12.0f);
+	m_Camera->SetRotation(22.0f, 0.0f, 0.0f);*/
+	m_Camera->SetPosition(0.0f, 0.0f, -10.0f);
+	m_Camera->Render();
 	
 	// 모델 파일 이름을 설정한다.
-	strcpy_s(modelFileName, "data/plane.txt");
+	// strcpy_s(modelFileName, "data/plane.txt");
 	
 	// 로드할 텍스처 파일의 이름을 설정한다.
-	strcpy_s(textureFileName, "data/stone01.tga");
+	// strcpy_s(textureFileName, "data/stone01.tga");
 	
 	// 모델 생성 및 초기화
-	m_Model = new ModelClass;
+	/*m_Model = new ModelClass;
 	
 	result = m_Model->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), textureFileName, modelFileName);
 	if (!result)
@@ -95,14 +100,52 @@ bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 	m_Lights[2].SetPosition(-3.0f, 1.0f, -3.0f);
 	
 	m_Lights[3].SetDiffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
-	m_Lights[3].SetPosition(3.0f, 1.0f, -3.0f);
+	m_Lights[3].SetPosition(3.0f, 1.0f, -3.0f);*/
+	
+	// 텍스처 셰이더 객체를 생성하고 초기화한다.
+	m_TextureShader = new TextureShaderClass;
+
+	result = m_TextureShader->Initialize(m_Direct3D->GetDevice(), hwnd);
+	if(!result)
+	{
+		MessageBox(hwnd, L"Could not initialize the texture shader object.", L"Error", MB_OK);
+		return false;
+	}
+	
+	// file name of the bitmap file를 설정한다.
+	strcpy_s(bitmapFilename, "data/stone01.tga");
+	
+	// bitmap 객체를 생성하고 초기화한다.
+	m_Bitmap = new BitmapClass;
+	result = m_Bitmap->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), screenWidth, screenHeight, bitmapFilename, 50, 50);
+	
+	if(!result)
+	{
+		return false;
+	}
 	
 	return true;
 }
 
 void ApplicationClass::Shutdown()
 {
-	// 라이트 오브젝트 해제
+	// bitmap 객체를 해제한다.
+	if(m_Bitmap)
+	{
+		m_Bitmap->Shutdown();
+		delete m_Bitmap;
+		m_Bitmap = 0;
+	}
+	
+	// 텍스처 셰이더 객체를 해제한다.
+	if(m_TextureShader)
+	{
+		m_TextureShader->Shutdown();
+		delete m_TextureShader;
+		m_TextureShader = 0;
+	}
+	
+	/*// 라이트 오브젝트 해제
 	if (m_Lights)
 	{
 		delete[] m_Lights;
@@ -123,7 +166,7 @@ void ApplicationClass::Shutdown()
 		m_Model->Shutdown();
 		delete m_Model;
 		m_Model = 0;
-	}
+	}*/
 	
 	// Camera 객체 해제
 	if (m_Camera)
@@ -170,13 +213,15 @@ bool ApplicationClass::Frame()
 
 bool ApplicationClass::Render(/*float rotation*/)
 {
-	XMMATRIX worldMatrix, viewMatrix, projectionMatrix, srMatrix;
-	XMFLOAT4 diffuseColor[4], lightPosition[4];
-	int i;
+	//XMMATRIX worldMatrix, viewMatrix, projectionMatrix, srMatrix;
+	// XMFLOAT4 diffuseColor[4], lightPosition[4];
+	// int i;
+	XMMATRIX worldMatrix, viewMatrix, orthoMatrix;
 	bool result;
 	
 	// 씬 시작을 위해 버퍼 비우기
-	m_Direct3D->BeginScene(0.6f, 0.8f, 0.5f, 1.0f);
+	// m_Direct3D->BeginScene(0.6f, 0.8f, 0.5f, 1.0f);
+	m_Direct3D->BeginScene(0.0f, 0.0f, 0.0f, 1.0f);
 	
 	// 카메라 위치에 기반해서 뷰 행렬 생성하기
 	m_Camera->Render();
@@ -184,9 +229,10 @@ bool ApplicationClass::Render(/*float rotation*/)
 	// 카메라와 d3d 객체에서 world, view, projection 행렬 가져오기
 	m_Direct3D->GetWorldMatrix(worldMatrix);
 	m_Camera->GetViewMatrix(viewMatrix);
-	m_Direct3D->GetProjectionMatrix(projectionMatrix);
+	// m_Direct3D->GetProjectionMatrix(projectionMatrix);
+	m_Direct3D->GetOrthoMatrix(orthoMatrix);
 	
-	// 라이트 속성들을 가져온다
+	/*// 라이트 속성들을 가져온다
 	for(i = 0; i < m_numLights; i++)
 	{
 		// 네 라이트 색으로 디퓨즈 색 배열을 만든다.
@@ -194,7 +240,7 @@ bool ApplicationClass::Render(/*float rotation*/)
 		
 		// 네 라이트 위치로 라이트 위치 배열을 만든다.
 		lightPosition[i] = m_Lights[i].GetPosition();
-	}
+	}*/
 	
 	/*rotationMatrix = XMMatrixRotationY(rotation); // 회전 행렬을 만든다.
 	translationMatrix = XMMatrixTranslation(-2.0f, 0.0f, 0.0f); // 이동 행렬을 만든다.
@@ -204,7 +250,7 @@ bool ApplicationClass::Render(/*float rotation*/)
 	*/
 
 	// 모델의 버택스 & 인데스 버퍼를 파이프라인에 넣어 그리기 준비하기
-	m_Model->Render(m_Direct3D->GetDeviceContext());
+	/*m_Model->Render(m_Direct3D->GetDeviceContext());
 
 	// 텍스처 셰이더를 사용해서 모델 렌덜하기
 	result = m_LightShader->Render(m_Direct3D->GetDeviceContext(), m_Model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix, m_Model->GetTexture(),
@@ -212,7 +258,7 @@ bool ApplicationClass::Render(/*float rotation*/)
 	if(!result)
 	{
 		return false;
-	}
+	}*/
 	
 	/*scaleMatrix = XMMatrixScaling(0.5f, 0.5f, 0.5f);
 	rotationMatrix = XMMatrixRotationY(rotation); // 회전 행렬을 만든다.
@@ -232,6 +278,26 @@ bool ApplicationClass::Render(/*float rotation*/)
 	{
 		return false;
 	}*/
+	
+	// 모든 2D 렌더링을 시작하기 위해 Z 버퍼를 끈다.
+	m_Direct3D->TurnZBufferOff();
+
+	// 그리기를 준비하도록 비트맵의 정점·인덱스 버퍼를 그래픽 파이프라인에 올린다.
+	result = m_Bitmap->Render(m_Direct3D->GetDeviceContext());
+	if(!result)
+	{
+		return false;
+	}
+
+	// 텍스처 셰이더로 비트맵을 렌더링한다.
+	result = m_TextureShader->Render(m_Direct3D->GetDeviceContext(), m_Bitmap->GetIndexCount(), worldMatrix, viewMatrix, orthoMatrix, m_Bitmap->GetTexture());
+	if(!result)
+	{
+		return false;
+	}
+
+	// 모든 2D 렌더링이 끝났으니 Z 버퍼를 다시 켠다.
+	m_Direct3D->TurnZBufferOn();
 	
 	// 씬에 랜더된 씬을 투영하기
 	m_Direct3D->EndScene();

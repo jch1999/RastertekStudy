@@ -22,7 +22,7 @@ CameraClass::~CameraClass()
 {
 }
 
-void CameraClass::SetPostion(float x, float y, float z)
+void CameraClass::SetPosition(float x, float y, float z)
 {
     m_positionX = x;
     m_positionY = y;

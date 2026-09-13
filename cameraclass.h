@@ -19,7 +19,7 @@ public:
     CameraClass(const CameraClass&);
     ~CameraClass();
     
-    void SetPostion(float, float, float);
+    void SetPosition(float, float, float);
     void SetRotation(float, float, float);
     
     XMFLOAT3 GetPosition();
