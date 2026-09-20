@@ -13,7 +13,9 @@
 #include "textureshaderclass.h"
 // #include "lightshaderclass.h"
 // #include "lightclass.h"
-#include "bitmapclass.h"
+//#include "bitmapclass.h"
+#include "spriteclass.h"
+#include "timerclass.h"
 
 //////////////
 // INCLUDES //
@@ -58,8 +60,10 @@ private:
 	// LightShaderClass* m_LightShader;
 	// LightClass* m_Lights;
 	// int m_numLights;
-	BitmapClass* m_Bitmap;
+	// BitmapClass* m_Bitmap;
 	TextureShaderClass* m_TextureShader;
+	SpriteClass* m_Sprite;
+	TimerClass* m_Timer;
 	
 	XMMATRIX scaleMatrix;
 	XMMATRIX rotationMatrix;

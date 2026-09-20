@@ -14,7 +14,9 @@ ApplicationClass::ApplicationClass()
 	// m_LightShader = 0;
 	// m_Lights = 0;
 	m_TextureShader = 0;
-	m_Bitmap = 0;
+	// m_Bitmap = 0;
+	m_Sprite = 0;
+	m_Timer = 0;
 }
 
 
@@ -32,7 +34,8 @@ bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 {
 	char textureFileName[128];
 	//char modelFileName[128];
-	char bitmapFilename[128];
+	// char bitmapFilename[128];
+	char spriteFilename[128];
 	bool result;
 
 	// Direct3D 객체 생성 및 초기화
@@ -112,14 +115,23 @@ bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 		return false;
 	}
 	
-	// file name of the bitmap file를 설정한다.
-	strcpy_s(bitmapFilename, "data/stone01.tga");
+	// sprite info file we will be using를 설정한다.
+	strcpy_s(spriteFilename, "data/sprite_data_01.txt");
 	
-	// bitmap 객체를 생성하고 초기화한다.
-	m_Bitmap = new BitmapClass;
-	result = m_Bitmap->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), screenWidth, screenHeight, bitmapFilename, 50, 50);
+	// sprite 객체를 생성하고 초기화한다.
+	m_Sprite  = new SpriteClass;
+	result = m_Sprite->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), screenWidth, screenHeight, spriteFilename, 50, 50);
 	
 	if(!result)
+	{
+		return false;
+	}
+	
+	// timer 객체를 생성하고 초기화한다.
+	m_Timer = new TimerClass;
+
+	result = m_Timer->Initialize();
+	if (!result)
 	{
 		return false;
 	}
@@ -129,13 +141,28 @@ bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 
 void ApplicationClass::Shutdown()
 {
+	// timer 객체를 해제한다.
+	if(m_Timer)
+	{
+		delete m_Timer;
+		m_Timer = 0;
+	}
+	
+	// sprite 객체를 해제한다.
+	if(m_Sprite)
+	{
+		m_Sprite->Shutdown();
+		delete m_Sprite;
+		m_Sprite = 0;
+	}
+	
 	// bitmap 객체를 해제한다.
-	if(m_Bitmap)
+	/*if(m_Bitmap)
 	{
 		m_Bitmap->Shutdown();
 		delete m_Bitmap;
 		m_Bitmap = 0;
-	}
+	}*/
 	
 	// 텍스처 셰이더 객체를 해제한다.
 	if(m_TextureShader)
@@ -189,6 +216,7 @@ void ApplicationClass::Shutdown()
 
 bool ApplicationClass::Frame()
 {
+	float frameTime;
 	bool result;
 	/*static float rotation = 0.0f;
 
@@ -198,6 +226,15 @@ bool ApplicationClass::Frame()
 	{
 		rotation += 360.0f;
 	}*/
+	
+	// 시스템 통계를 갱신한다.
+	m_Timer->Frame();
+	
+	// 횬재 프레임 시간을 가져온다.
+	frameTime = m_Timer->GetTime();
+	
+	// 프레임 시간을 사용해 스프라이트 객체를 갱신한다.
+	m_Sprite->Update(frameTime);
 	
 	// 그래픽 씬 랜더
 	// result = Render(rotation);
@@ -282,15 +319,15 @@ bool ApplicationClass::Render(/*float rotation*/)
 	// 모든 2D 렌더링을 시작하기 위해 Z 버퍼를 끈다.
 	m_Direct3D->TurnZBufferOff();
 
-	// 그리기를 준비하도록 비트맵의 정점·인덱스 버퍼를 그래픽 파이프라인에 올린다.
-	result = m_Bitmap->Render(m_Direct3D->GetDeviceContext());
+	// 스프라이트의 정점·인덱스 버퍼를 그래픽 파이프라인에 올려 그리기를 준비한다.
+	result = m_Sprite->Render(m_Direct3D->GetDeviceContext());
 	if(!result)
 	{
 		return false;
 	}
 
-	// 텍스처 셰이더로 비트맵을 렌더링한다.
-	result = m_TextureShader->Render(m_Direct3D->GetDeviceContext(), m_Bitmap->GetIndexCount(), worldMatrix, viewMatrix, orthoMatrix, m_Bitmap->GetTexture());
+	// 텍스처 셰이더로 스프라이트를 렌더링한다.
+	result = m_TextureShader->Render(m_Direct3D->GetDeviceContext(), m_Sprite->GetIndexCount(), worldMatrix, viewMatrix, orthoMatrix, m_Sprite->GetTexture());
 	if(!result)
 	{
 		return false;
