@@ -11,6 +11,8 @@ D3DClass::D3DClass()
 	m_depthDisabledStencilState = 0;
 	m_depthStencilView = 0;
 	m_rasterState = 0;
+	m_alphaEnableBlendingState = 0;
+	m_alphaDisableBlendingState = 0;
 }
 
 
@@ -42,6 +44,7 @@ bool D3DClass::Initialize(int screenWidth, int screenHeight, bool vsync, HWND hw
 	D3D11_DEPTH_STENCIL_DESC depthStencilDesc;
 	D3D11_DEPTH_STENCIL_DESC depthDisabledStencilDesc;
 	D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc;
+	D3D11_BLEND_DESC blendStateDescription;
 	D3D11_RASTERIZER_DESC rasterDesc;
 	float fieldOfView, screenAspect;
 
@@ -387,6 +390,36 @@ bool D3DClass::Initialize(int screenWidth, int screenHeight, bool vsync, HWND hw
 		return false;
 	}
 	
+	// 블렌드 상태 설명 구조체를 0으로 초기화한다.
+	ZeroMemory(&blendStateDescription, sizeof(D3D11_BLEND_DESC));
+	// 알파 블렌딩이 활성화된 블렌드 상태 서술자를 만든다.
+	blendStateDescription.RenderTarget[0].BlendEnable = TRUE;
+	blendStateDescription.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
+	blendStateDescription.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+	blendStateDescription.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+	blendStateDescription.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+	blendStateDescription.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
+	blendStateDescription.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	blendStateDescription.RenderTarget[0].RenderTargetWriteMask = 0x0f;
+	
+	// 설명 구조체로 블렌드 상태를 생성한다.
+	result = m_device->CreateBlendState(&blendStateDescription, &m_alphaEnableBlendingState);
+	if(FAILED(result))
+	{
+		return false;
+	}
+	
+	// 설명 구조체를 수정해 알파 비활성 블렌드 상태 설명을 만든다.
+	blendStateDescription.RenderTarget[0].BlendEnable = FALSE;
+	
+	// 설명 구조체로 블렌드 상태를 생성한다.
+	result = m_device->CreateBlendState(&blendStateDescription, &m_alphaDisableBlendingState);
+	
+	if(FAILED(result))
+	{
+		return false;
+	}
+	
 	return true;
 }
 
@@ -396,6 +429,18 @@ void D3DClass::Shutdown()
 	if (m_swapChain)
 	{
 		m_swapChain->SetFullscreenState(false, NULL);
+	}
+	
+	if(m_alphaEnableBlendingState)
+	{
+		m_alphaEnableBlendingState->Release();
+		m_alphaEnableBlendingState = 0;
+	}
+
+	if(m_alphaDisableBlendingState)
+	{
+		m_alphaDisableBlendingState->Release();
+		m_alphaDisableBlendingState = 0;
 	}
 
 	if(m_depthDisabledStencilState)
@@ -553,5 +598,39 @@ void D3DClass::TurnZBufferOn()
 void D3DClass::TurnZBufferOff()
 {
 	m_deviceContext->OMSetDepthStencilState(m_depthDisabledStencilState, 1);
+	return;
+}
+
+void D3DClass::EnableAlphaBlending()
+{
+	float blendFactor[4];
+
+
+	// blend factor를 설정한다.
+	blendFactor[0] = 0.0f;
+	blendFactor[1] = 0.0f;
+	blendFactor[2] = 0.0f;
+	blendFactor[3] = 0.0f;
+
+	// alpha blending를 켠다.
+	m_deviceContext->OMSetBlendState(m_alphaEnableBlendingState, blendFactor, 0xffffffff);
+
+	return;
+}
+
+void D3DClass::DisableAlphaBlending()
+{
+	float blendFactor[4];
+
+
+	// blend factor를 설정한다.
+	blendFactor[0] = 0.0f;
+	blendFactor[1] = 0.0f;
+	blendFactor[2] = 0.0f;
+	blendFactor[3] = 0.0f;
+
+	// alpha blending를 끈다.
+	m_deviceContext->OMSetBlendState(m_alphaDisableBlendingState, blendFactor, 0xffffffff);
+
 	return;
 }

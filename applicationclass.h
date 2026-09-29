@@ -16,6 +16,9 @@
 //#include "bitmapclass.h"
 #include "spriteclass.h"
 #include "timerclass.h"
+#include "fontshaderclass.h"
+#include "fontclass.h"
+#include "textclass.h"
 
 //////////////
 // INCLUDES //
@@ -68,4 +71,8 @@ private:
 	XMMATRIX scaleMatrix;
 	XMMATRIX rotationMatrix;
 	XMMATRIX translationMatrix;
+	
+	FontShaderClass* m_FontShader;
+	FontClass* m_Font;
+	TextClass *m_TextString1, *m_TextString2;
 };
