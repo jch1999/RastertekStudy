@@ -19,8 +19,10 @@ ApplicationClass::ApplicationClass()
 	m_Timer = 0;
 	m_FontShader = 0;
 	m_Font = 0;
-	m_TextString1 = 0;
-	m_TextString2 = 0;
+	// m_TextString1 = 0;
+	// m_TextString2 = 0;
+	m_Fps = 0;
+	m_FpsString = 0;
 }
 
 
@@ -36,7 +38,8 @@ ApplicationClass::~ApplicationClass()
 
 bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 {
-	char testString1[32], testString2[32];
+	// char testString1[32], testString2[32];
+	char fpsString[32];
 	// char textureFileName[128];
 	//char modelFileName[128];
 	// char bitmapFilename[128];
@@ -160,7 +163,7 @@ bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 		return false;
 	}
 	
-	// strings we want to display를 설정한다.
+	/*// strings we want to display를 설정한다.
 	strcpy_s(testString1, "Hello");
 	strcpy_s(testString2, "Goodbye");
 	// first text 객체를 생성하고 초기화한다.
@@ -179,6 +182,24 @@ bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 	if(!result)
 	{
 		return false;
+	}*/
+	
+	// fps 객체를 생성하고 초기화한다.
+	m_Fps = new FpsClass();
+
+	m_Fps->Initialize();
+
+	// initial fps and fps string를 설정한다.
+	m_previousFps = -1;
+	strcpy_s(fpsString, "Fps: 0");
+
+	// text object for the fps string를 생성하고 초기화한다.
+	m_FpsString  = new TextClass;
+
+	result = m_FpsString ->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), screenWidth, screenHeight, 32, m_Font, fpsString, 10, 10, 0.0f, 1.0f, 0.0f);
+	if(!result)
+	{
+		return false;
 	}
 	
 	return true;
@@ -186,7 +207,23 @@ bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 
 void ApplicationClass::Shutdown()
 {
-	// text string 객체를 해제한다.
+	
+	// text object for the fps string를 해제한다.
+	if(m_FpsString)
+	{
+		m_FpsString->Shutdown();
+		delete m_FpsString;
+		m_FpsString = 0;
+	}
+	
+	// fps 객체를 해제한다.
+	if(m_Fps)
+	{
+		delete m_Fps;
+		m_Fps = 0;
+	}
+	
+	/*// text string 객체를 해제한다.
 	if(m_TextString2)
 	{
 		m_TextString2->Shutdown();
@@ -199,7 +236,7 @@ void ApplicationClass::Shutdown()
 		m_TextString1->Shutdown();
 		delete m_TextString1;
 		m_TextString1 = 0;
-	}
+	}*/
 	
 	// font 객체를 해제한다.
 	if(m_Font)
@@ -294,6 +331,14 @@ bool ApplicationClass::Frame()
 {
 	float frameTime;
 	bool result;
+	
+	// frames per second each frame를 갱신한다.
+	result = UpdateFps();
+	if(!result)
+	{
+		return false;
+	}
+	
 	/*static float rotation = 0.0f;
 
 	// 각 프레임별 rotation 변수 갱신
@@ -410,7 +455,7 @@ bool ApplicationClass::Render(/*float rotation*/)
 		return false;
 	}*/
 
-	// first text string using the font shader를 렌더링한다.
+	/*// first text string using the font shader를 렌더링한다.
 	m_TextString1->Render(m_Direct3D->GetDeviceContext());
 
 	result = m_FontShader->Render(m_Direct3D->GetDeviceContext(), m_TextString1->GetIndexCount(), worldMatrix, viewMatrix, orthoMatrix,
@@ -428,6 +473,17 @@ bool ApplicationClass::Render(/*float rotation*/)
 	if(!result)
 	{
 		return false;
+	}*/
+	
+	// fps text string using the font shader를 렌더링한다.
+	m_FpsString->Render(m_Direct3D->GetDeviceContext());
+
+	result = m_FontShader->Render(m_Direct3D->GetDeviceContext(), m_FpsString->GetIndexCount(), worldMatrix, viewMatrix, orthoMatrix,
+								  m_Font->GetTexture(), m_FpsString->GetPixelColor());
+	
+	if(!result)
+	{
+		return false;
 	}
 	
 	// 2D 렌더링이 끝났으니 Z 버퍼를 켜고 알파 블렌딩을 끈다.
@@ -436,6 +492,76 @@ bool ApplicationClass::Render(/*float rotation*/)
 	
 	// 씬에 랜더된 씬을 투영하기
 	m_Direct3D->EndScene();
+
+	return true;
+}
+
+bool ApplicationClass::UpdateFps()
+{
+	int fps;
+	char tempString[16], finalString[16];
+	float red, green, blue;
+	bool result;
+
+
+	// 매 프레임마다 fps를 갱신한다.
+	m_Fps->Frame();
+
+	// 현재 fps를 가져온다.
+	fps = m_Fps->GetFps();
+
+	// 직전 프레임의 fps와 같은지 확인한다. 같으면 텍스트 문자열을 갱신할 필요가 없다.
+	if(m_previousFps == fps)
+	{
+		return true;
+	}
+
+	// 다음 프레임에서 비교하기 위해 fps를 저장한다.
+	m_previousFps = fps;
+
+	// fps를 100,000 미만으로 잘라낸다.
+	if(fps > 99999)
+	{
+		fps = 99999;
+	}
+
+	// fps 정수를 문자열 형식으로 변환한다.
+	sprintf_s(tempString, "%d", fps);
+
+	// fps 문자열을 구성한다.
+	strcpy_s(finalString, "Fps: ");
+	strcat_s(finalString, tempString);
+
+	// fps가 60 이상이면 fps 색을 녹색으로 설정한다.
+	if(fps >= 60)
+	{
+		red = 0.0f;
+		green = 1.0f;
+		blue = 0.0f;
+	}
+
+	// fps가 60 미만이면 fps 색을 노란색으로 설정한다.
+	if(fps < 60)
+	{
+		red = 1.0f;
+		green = 1.0f;
+		blue = 0.0f;
+	}
+
+	// fps가 30 미만이면 fps 색을 빨간색으로 설정한다.
+	if(fps < 30)
+	{
+		red = 1.0f;
+		green = 0.0f;
+		blue = 0.0f;
+	}
+
+	// 새 문자열 정보로 문장 정점 버퍼를 갱신한다.
+	result = m_FpsString->UpdateText(m_Direct3D->GetDeviceContext(), m_Font, finalString, 10, 10, red, green, blue);
+	if(!result)
+	{
+		return false;
+	}
 
 	return true;
 }
