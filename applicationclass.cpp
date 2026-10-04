@@ -23,6 +23,7 @@ ApplicationClass::ApplicationClass()
 	// m_TextString2 = 0;
 	m_Fps = 0;
 	m_FpsString = 0;
+	m_MouseStrings = 0;
 }
 
 
@@ -39,7 +40,8 @@ ApplicationClass::~ApplicationClass()
 bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 {
 	// char testString1[32], testString2[32];
-	char fpsString[32];
+	// char fpsString[32];
+	char  mouseString1[32], mouseString2[32], mouseString3[32];
 	// char textureFileName[128];
 	//char modelFileName[128];
 	// char bitmapFilename[128];
@@ -184,7 +186,7 @@ bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 		return false;
 	}*/
 	
-	// fps 객체를 생성하고 초기화한다.
+	/*// fps 객체를 생성하고 초기화한다.
 	m_Fps = new FpsClass();
 
 	m_Fps->Initialize();
@@ -200,6 +202,32 @@ bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 	if(!result)
 	{
 		return false;
+	}*/
+	
+	// 초기 마우스 문자열 설정
+	strcpy_s(mouseString1, "Mouse X: 0");
+	strcpy_s(mouseString2, "Mouse Y: 0");
+	strcpy_s(mouseString3, "Mouse Button: No");
+	
+	// 마우스 문자열 객체 생성 및 초기화
+	m_MouseStrings = new TextClass[3];
+
+	result = m_MouseStrings[0].Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), screenWidth, screenHeight, 32, m_Font, mouseString1, 10, 10, 1.0f, 1.0f, 1.0f);
+	if(!result)
+	{
+		return false;
+	}
+
+	result = m_MouseStrings[1].Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), screenWidth, screenHeight, 32, m_Font, mouseString2, 10, 35, 1.0f, 1.0f, 1.0f);
+	if(!result)
+	{
+		return false;
+	}
+
+	result = m_MouseStrings[2].Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), screenWidth, screenHeight, 32, m_Font, mouseString3, 10, 60, 1.0f, 1.0f, 1.0f);
+	if(!result)
+	{
+		return false;
 	}
 	
 	return true;
@@ -207,6 +235,16 @@ bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 
 void ApplicationClass::Shutdown()
 {
+	// text object for the mouse string를 해제한다.
+	if(m_MouseStrings)
+	{
+		m_MouseStrings[0].Shutdown();
+		m_MouseStrings[1].Shutdown();
+		m_MouseStrings[2].Shutdown();
+		
+		delete[] m_MouseStrings;
+		m_MouseStrings = 0;
+	}
 	
 	// text object for the fps string를 해제한다.
 	if(m_FpsString)
@@ -326,18 +364,37 @@ void ApplicationClass::Shutdown()
 	return;
 }
 
-
-bool ApplicationClass::Frame()
+bool ApplicationClass::Frame(InputClass* Input)
 {
 	float frameTime;
-	bool result;
+	bool result, mouseDown;
+	int mouseX, mouseY;
 	
-	// frames per second each frame를 갱신한다.
-	result = UpdateFps();
+	// 사용자가 종료를 원해 ESC를 눌렀는지 확인한다.
+	if(Input->IsEscapePressed())
+	{
+		return false;
+	}
+	
+	// 입력 객체에서 마우스 위치를 얻는다,
+	Input->GetMouseLocation(mouseX, mouseY);
+
+	// 마우스 버튼이 눌렸는지 확인한다.
+	mouseDown = Input->IsMousePressed();
+
+	// mouse strings each frame를 갱신한다.
+	result = UpdateMouseStrings(mouseX, mouseY, mouseDown);
 	if(!result)
 	{
 		return false;
 	}
+	
+	/*// frames per second each frame를 갱신한다.
+	result = UpdateFps();
+	if(!result)
+	{
+		return false;
+	}*/
 	
 	/*static float rotation = 0.0f;
 
@@ -373,7 +430,7 @@ bool ApplicationClass::Render(/*float rotation*/)
 {
 	//XMMATRIX worldMatrix, viewMatrix, projectionMatrix, srMatrix;
 	// XMFLOAT4 diffuseColor[4], lightPosition[4];
-	// int i;
+	int i;
 	XMMATRIX worldMatrix, viewMatrix, orthoMatrix;
 	bool result;
 	
@@ -437,6 +494,8 @@ bool ApplicationClass::Render(/*float rotation*/)
 		return false;
 	}*/
 	
+	
+	
 	// 2D 렌더링을 위해 Z 버퍼를 끄고 알파 블렌딩을 켠다.
 	m_Direct3D->TurnZBufferOff();
 	m_Direct3D->EnableAlphaBlending();
@@ -475,7 +534,7 @@ bool ApplicationClass::Render(/*float rotation*/)
 		return false;
 	}*/
 	
-	// fps text string using the font shader를 렌더링한다.
+	/*// fps text string using the font shader를 렌더링한다.
 	m_FpsString->Render(m_Direct3D->GetDeviceContext());
 
 	result = m_FontShader->Render(m_Direct3D->GetDeviceContext(), m_FpsString->GetIndexCount(), worldMatrix, viewMatrix, orthoMatrix,
@@ -484,6 +543,20 @@ bool ApplicationClass::Render(/*float rotation*/)
 	if(!result)
 	{
 		return false;
+	}
+	*/
+	
+	// mouse text strings using the font shader를 렌더링한다.
+	for(i=0; i<3; i++)
+	{
+		m_MouseStrings[i].Render(m_Direct3D->GetDeviceContext());
+
+		result = m_FontShader->Render(m_Direct3D->GetDeviceContext(), m_MouseStrings[i].GetIndexCount(), worldMatrix, viewMatrix, orthoMatrix,
+									  m_Font->GetTexture(), m_MouseStrings[i].GetPixelColor());
+		if(!result)
+		{
+			return false;
+		}
 	}
 	
 	// 2D 렌더링이 끝났으니 Z 버퍼를 켜고 알파 블렌딩을 끈다.
@@ -563,5 +636,58 @@ bool ApplicationClass::UpdateFps()
 		return false;
 	}
 
+	return true;
+}
+
+bool ApplicationClass::UpdateMouseStrings(int mouseX, int mouseY, bool mouseDown)
+{
+	char tempString[16], finalString[32];
+	bool result;
+	
+	// 마우스 X 정수를 문자열로 변환한다.
+	sprintf_s(tempString, "%d", mouseX);
+
+	// mouse X string를 설정한다.
+	strcpy_s(finalString, "Mouse X: ");
+	strcat_s(finalString, tempString);
+
+	// 새 문자열 정보로 문장 정점 버퍼를 갱신한다.
+	result = m_MouseStrings[0].UpdateText(m_Direct3D->GetDeviceContext(), m_Font, finalString, 10, 10, 1.0f, 1.0f, 1.0f);
+	if(!result)
+	{
+		return false;
+	}
+
+	// 마우스 Y 정수를 문자열로 변환한다.
+	sprintf_s(tempString, "%d", mouseY);
+
+	// mouse Y string를 설정한다.
+	strcpy_s(finalString, "Mouse Y: ");
+	strcat_s(finalString, tempString);
+
+	// 새 문자열 정보로 문장 정점 버퍼를 갱신한다.
+	result = m_MouseStrings[1].UpdateText(m_Direct3D->GetDeviceContext(), m_Font, finalString, 10, 35, 1.0f, 1.0f, 1.0f);
+	if(!result)
+	{
+		return false;
+	}
+
+	// mouse button string를 설정한다.
+	if(mouseDown)
+	{
+		strcpy_s(finalString, "Mouse Button: Yes");
+	}
+	else
+	{
+		strcpy_s(finalString, "Mouse Button: No");
+	}
+
+	// 새 문자열 정보로 문장 정점 버퍼를 갱신한다.
+	result = m_MouseStrings[2].UpdateText(m_Direct3D->GetDeviceContext(), m_Font, finalString, 10, 60, 1.0f, 1.0f, 1.0f);
+	if(!result)
+	{
+		return false;
+	}
+	
 	return true;
 }

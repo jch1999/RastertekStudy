@@ -38,8 +38,13 @@ bool SystemClass::Initialize()
 	// 입력 객체를 생성하고 초기화한다. 이 객체는 사용자의 키보드 입력을 읽어 처리하는 데 사용된다.
 	m_Input = new InputClass;
 
-	m_Input->Initialize();
-
+	// m_Input->Initialize();
+	result = m_Input->Initialize(m_hinstance, m_hwnd, screenWidth, screenHeight);
+	if(!result)
+	{
+		return false;
+	}
+	
 	// 애플리케이션 클래스 객체를 생성하고 초기화한다. 이 객체는 이 애플리케이션의 모든 그래픽 렌더링을 담당한다.
 	m_Application = new ApplicationClass;
 
@@ -65,6 +70,7 @@ void SystemClass::Shutdown()
 	// 입력 객체를 해제한다.
 	if (m_Input)
 	{
+		m_Input->Shutdown();
 		delete m_Input;
 		m_Input = 0;
 	}
@@ -121,14 +127,19 @@ bool SystemClass::Frame()
 	bool result;
 
 
-	// 사용자가 ESC를 눌러 애플리케이션을 종료하려는지 확인한다.
+	/*// 사용자가 ESC를 눌러 애플리케이션을 종료하려는지 확인한다.
 	if (m_Input->IsKeyDown(VK_ESCAPE))
 	{
 		return false;
+	}*/
+	result = m_Input->Frame();
+	if(!result)
+	{
+		return false;
 	}
-
+	
 	// 애플리케이션 클래스 객체의 프레임 처리를 수행한다.
-	result = m_Application->Frame();
+	result = m_Application->Frame(m_Input);
 	if (!result)
 	{
 		return false;
@@ -139,7 +150,7 @@ bool SystemClass::Frame()
 
 LRESULT CALLBACK SystemClass::MessageHandler(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM lparam)
 {
-	switch (umsg)
+	/*switch (umsg)
 	{
 		// 키보드에서 키가 눌렸는지 확인한다.
 		case WM_KEYDOWN:
@@ -162,7 +173,9 @@ LRESULT CALLBACK SystemClass::MessageHandler(HWND hwnd, UINT umsg, WPARAM wparam
 		{
 			return DefWindowProc(hwnd, umsg, wparam, lparam);
 		}
-	}
+	}*/
+	
+	return DefWindowProc(hwnd, umsg, wparam, lparam);
 }
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam, LPARAM lparam)

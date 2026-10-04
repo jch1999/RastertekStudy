@@ -20,6 +20,7 @@
 #include "fontclass.h"
 #include "textclass.h"
 #include "fpsclass.h"
+#include "inputclass.h"
 
 //////////////
 // INCLUDES //
@@ -50,11 +51,12 @@ public:
 
 	bool Initialize(int, int, HWND);
 	void Shutdown();
-	bool Frame();
+	bool Frame(InputClass*);
 
 private:
 	bool Render(/*float*/);
 	bool UpdateFps();
+	bool UpdateMouseStrings(int, int, bool);
 
 private:
 	D3DClass* m_Direct3D;
@@ -78,6 +80,6 @@ private:
 	FontClass* m_Font;
 	// TextClass *m_TextString1, *m_TextString2;
 	FpsClass* m_Fps;
-	TextClass* m_FpsString;
+	TextClass *m_FpsString, *m_MouseStrings;
 	int m_previousFps;
 };
