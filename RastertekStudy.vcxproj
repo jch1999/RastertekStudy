@@ -136,6 +136,7 @@
     <ClCompile Include="lightshaderclass.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="modelclass.cpp" />
+    <ClCompile Include="multitextureshaderclass.cpp" />
     <ClCompile Include="spriteclass.cpp" />
     <ClCompile Include="systemclass.cpp" />
     <ClCompile Include="textclass.cpp" />
@@ -156,6 +157,7 @@
     <ClInclude Include="lightclass.h" />
     <ClInclude Include="lightshaderclass.h" />
     <ClInclude Include="modelclass.h" />
+    <ClInclude Include="multitextureshaderclass.h" />
     <ClInclude Include="spriteclass.h" />
     <ClInclude Include="systemclass.h" />
     <ClInclude Include="textclass.h" />
@@ -171,6 +173,8 @@
     <Content Include="font.vs" />
     <Content Include="light.ps" />
     <Content Include="light.vs" />
+    <Content Include="multitexture.ps" />
+    <Content Include="multitexture.vs" />
     <Content Include="texture.ps" />
     <Content Include="texture.vs" />
   </ItemGroup>

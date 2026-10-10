@@ -1,0 +1,43 @@
+////////////////////////////////////////////////////////////////////////////////
+// Filename: multitexture.ps
+////////////////////////////////////////////////////////////////////////////////
+
+
+/////////////
+// GLOBALS //
+/////////////
+Texture2D shaderTexture1 : register(t0);
+Texture2D shaderTexture2 : register(t1);
+SamplerState SampleType : register(s0);
+
+
+//////////////
+// TYPEDEFS //
+//////////////
+struct PixelInputType
+{
+	float4 position : SV_POSITION;
+	float2 tex : TEXCOORD0;
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Pixel Shader
+////////////////////////////////////////////////////////////////////////////////
+float4 MultiTexturePixelShader(PixelInputType input) : SV_TARGET
+{
+	float4 color1;
+	float4 color2;
+	float4 blendColor;
+	// 이 텍스처 좌표 위치에서 샘플러를 사용해 텍스처들로부터 픽셀색을 샘플한다.
+	color1 = shaderTexture1.Sample(SampleType, input.tex);
+	color2 = shaderTexture2.Sample(SampleType, input.tex);
+
+	// 두 텍스처를 하나로 합친다.
+	blendColor = color1 * color2 * 2.0;
+
+	// 최종색을 saturate(0~1로 클램프)한다.
+	blendColor = saturate(blendColor);
+
+	return blendColor;
+}

@@ -13,17 +13,18 @@ ApplicationClass::ApplicationClass()
 	// m_TextureShader = 0;
 	// m_LightShader = 0;
 	// m_Lights = 0;
-	m_TextureShader = 0;
+	// m_TextureShader = 0;
+	m_MultiTextureShader = 0;
 	// m_Bitmap = 0;
 	m_Sprite = 0;
 	m_Timer = 0;
-	m_FontShader = 0;
-	m_Font = 0;
+	// m_FontShader = 0;
+	// m_Font = 0;
 	// m_TextString1 = 0;
 	// m_TextString2 = 0;
-	m_Fps = 0;
-	m_FpsString = 0;
-	m_MouseStrings = 0;
+	// m_Fps = 0;
+	// m_FpsString = 0;
+	// m_MouseStrings = 0;
 }
 
 
@@ -41,7 +42,8 @@ bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 {
 	// char testString1[32], testString2[32];
 	// char fpsString[32];
-	char  mouseString1[32], mouseString2[32], mouseString3[32];
+	// char mouseString1[32], mouseString2[32], mouseString3[32];
+	char modelFilename[128], textureFilename1[128], textureFilename2[128];
 	// char textureFileName[128];
 	//char modelFileName[128];
 	// char bitmapFilename[128];
@@ -146,7 +148,7 @@ bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 		return false;
 	}*/
 	
-	// font shader 객체를 생성하고 초기화한다.
+	/*// font shader 객체를 생성하고 초기화한다.
 	m_FontShader = new FontShaderClass;
 
 	result = m_FontShader->Initialize(m_Direct3D->GetDevice(), hwnd);
@@ -163,7 +165,7 @@ bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 	if(!result)
 	{
 		return false;
-	}
+	}*/
 	
 	/*// strings we want to display를 설정한다.
 	strcpy_s(testString1, "Hello");
@@ -204,7 +206,7 @@ bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 		return false;
 	}*/
 	
-	// 초기 마우스 문자열 설정
+	/*// 초기 마우스 문자열 설정
 	strcpy_s(mouseString1, "Mouse X: 0");
 	strcpy_s(mouseString2, "Mouse Y: 0");
 	strcpy_s(mouseString3, "Mouse Button: No");
@@ -228,6 +230,32 @@ bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 	if(!result)
 	{
 		return false;
+	}*/
+	
+	// multitexture shader 객체를 생성하고 초기화한다.
+	m_MultiTextureShader = new MultiTextureShaderClass;
+	
+	result = m_MultiTextureShader->Initialize(m_Direct3D->GetDevice(), hwnd);
+	if (!result)
+	{
+		MessageBox(hwnd, L"Could not initialize the multitexture shader object.", L"Error", MB_OK);
+		return false;
+	}
+	
+	// 도델 파일 이름을 설정한다.
+	strcpy_s(modelFilename, "data/square.txt");
+	
+	// file name of the textures를 설정한다.
+	strcpy_s(textureFilename1, "data/stone01.tga");
+	strcpy_s(textureFilename2, "data/dirt01.tga");
+	
+	// 모델 객체를 생성하고 초기화한다.
+	m_Model = new ModelClass;
+
+	result = m_Model->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), modelFilename, textureFilename1, textureFilename2);
+	if (!result)
+	{
+		return false;
 	}
 	
 	return true;
@@ -235,7 +263,7 @@ bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 
 void ApplicationClass::Shutdown()
 {
-	// text object for the mouse string를 해제한다.
+	/*// text object for the mouse string를 해제한다.
 	if(m_MouseStrings)
 	{
 		m_MouseStrings[0].Shutdown();
@@ -244,9 +272,9 @@ void ApplicationClass::Shutdown()
 		
 		delete[] m_MouseStrings;
 		m_MouseStrings = 0;
-	}
+	}*/
 	
-	// text object for the fps string를 해제한다.
+	/*// text object for the fps string를 해제한다.
 	if(m_FpsString)
 	{
 		m_FpsString->Shutdown();
@@ -259,7 +287,7 @@ void ApplicationClass::Shutdown()
 	{
 		delete m_Fps;
 		m_Fps = 0;
-	}
+	}*/
 	
 	/*// text string 객체를 해제한다.
 	if(m_TextString2)
@@ -276,7 +304,7 @@ void ApplicationClass::Shutdown()
 		m_TextString1 = 0;
 	}*/
 	
-	// font 객체를 해제한다.
+	/*// font 객체를 해제한다.
 	if(m_Font)
 	{
 			m_Font->Shutdown();
@@ -290,7 +318,7 @@ void ApplicationClass::Shutdown()
 		m_FontShader->Shutdown();
 		delete m_FontShader;
 		m_FontShader = 0;
-	}
+	}*/
 	
 	/*// timer 객체를 해제한다.
 	if(m_Timer)
@@ -315,13 +343,13 @@ void ApplicationClass::Shutdown()
 		m_Bitmap = 0;
 	}*/
 	
-	// 텍스처 셰이더 객체를 해제한다.
+	/*// 텍스처 셰이더 객체를 해제한다.
 	if(m_TextureShader)
 	{
 		m_TextureShader->Shutdown();
 		delete m_TextureShader;
 		m_TextureShader = 0;
-	}
+	}*/
 	
 	/*// 라이트 오브젝트 해제
 	if (m_Lights)
@@ -336,7 +364,7 @@ void ApplicationClass::Shutdown()
 		m_LightShader->Shutdown();
 		delete m_LightShader;
 		m_LightShader = 0;
-	}
+	}*/
 	
 	// model 객체 해제
 	if (m_Model)
@@ -344,7 +372,15 @@ void ApplicationClass::Shutdown()
 		m_Model->Shutdown();
 		delete m_Model;
 		m_Model = 0;
-	}*/
+	}
+	
+	// 멀티 텍스처 셰이더 객체를 해제한다.
+	if(m_MultiTextureShader)
+	{
+		m_MultiTextureShader->Shutdown();
+		delete m_MultiTextureShader;
+		m_MultiTextureShader = 0;
+	}
 	
 	// Camera 객체 해제
 	if (m_Camera)
@@ -366,9 +402,9 @@ void ApplicationClass::Shutdown()
 
 bool ApplicationClass::Frame(InputClass* Input)
 {
-	float frameTime;
+	// float frameTime;
 	bool result, mouseDown;
-	int mouseX, mouseY;
+	// int mouseX, mouseY;
 	
 	// 사용자가 종료를 원해 ESC를 눌렀는지 확인한다.
 	if(Input->IsEscapePressed())
@@ -376,7 +412,7 @@ bool ApplicationClass::Frame(InputClass* Input)
 		return false;
 	}
 	
-	// 입력 객체에서 마우스 위치를 얻는다,
+	/*// 입력 객체에서 마우스 위치를 얻는다,
 	Input->GetMouseLocation(mouseX, mouseY);
 
 	// 마우스 버튼이 눌렸는지 확인한다.
@@ -387,7 +423,7 @@ bool ApplicationClass::Frame(InputClass* Input)
 	if(!result)
 	{
 		return false;
-	}
+	}*/
 	
 	/*// frames per second each frame를 갱신한다.
 	result = UpdateFps();
@@ -431,7 +467,7 @@ bool ApplicationClass::Render(/*float rotation*/)
 	//XMMATRIX worldMatrix, viewMatrix, projectionMatrix, srMatrix;
 	// XMFLOAT4 diffuseColor[4], lightPosition[4];
 	int i;
-	XMMATRIX worldMatrix, viewMatrix, orthoMatrix;
+	XMMATRIX worldMatrix, viewMatrix, projectionMatrix;//orthoMatrix;
 	bool result;
 	
 	// 씬 시작을 위해 버퍼 비우기
@@ -444,8 +480,8 @@ bool ApplicationClass::Render(/*float rotation*/)
 	// 카메라와 d3d 객체에서 world, view, projection 행렬 가져오기
 	m_Direct3D->GetWorldMatrix(worldMatrix);
 	m_Camera->GetViewMatrix(viewMatrix);
-	// m_Direct3D->GetProjectionMatrix(projectionMatrix);
-	m_Direct3D->GetOrthoMatrix(orthoMatrix);
+	m_Direct3D->GetProjectionMatrix(projectionMatrix);
+	// m_Direct3D->GetOrthoMatrix(orthoMatrix);
 	
 	/*// 라이트 속성들을 가져온다
 	for(i = 0; i < m_numLights; i++)
@@ -494,7 +530,15 @@ bool ApplicationClass::Render(/*float rotation*/)
 		return false;
 	}*/
 	
+	// model using the multitexture shader를 렌더링한다.
+	m_Model->Render(m_Direct3D->GetDeviceContext());
 	
+	result = m_MultiTextureShader->Render(m_Direct3D->GetDeviceContext(), m_Model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix,
+										  m_Model->GetTexture(0), m_Model->GetTexture(1));
+	if(!result)
+	{
+		return false;
+	}
 	
 	// 2D 렌더링을 위해 Z 버퍼를 끄고 알파 블렌딩을 켠다.
 	m_Direct3D->TurnZBufferOff();
@@ -546,7 +590,7 @@ bool ApplicationClass::Render(/*float rotation*/)
 	}
 	*/
 	
-	// mouse text strings using the font shader를 렌더링한다.
+	/*// mouse text strings using the font shader를 렌더링한다.
 	for(i=0; i<3; i++)
 	{
 		m_MouseStrings[i].Render(m_Direct3D->GetDeviceContext());
@@ -557,7 +601,7 @@ bool ApplicationClass::Render(/*float rotation*/)
 		{
 			return false;
 		}
-	}
+	}*/
 	
 	// 2D 렌더링이 끝났으니 Z 버퍼를 켜고 알파 블렌딩을 끈다.
 	m_Direct3D->TurnZBufferOn();
@@ -569,7 +613,7 @@ bool ApplicationClass::Render(/*float rotation*/)
 	return true;
 }
 
-bool ApplicationClass::UpdateFps()
+/*bool ApplicationClass::UpdateFps()
 {
 	int fps;
 	char tempString[16], finalString[16];
@@ -637,8 +681,9 @@ bool ApplicationClass::UpdateFps()
 	}
 
 	return true;
-}
+}*/
 
+/*
 bool ApplicationClass::UpdateMouseStrings(int mouseX, int mouseY, bool mouseDown)
 {
 	char tempString[16], finalString[32];
@@ -691,3 +736,4 @@ bool ApplicationClass::UpdateMouseStrings(int mouseX, int mouseY, bool mouseDown
 	
 	return true;
 }
+*/

@@ -8,7 +8,7 @@ ModelClass::ModelClass()
 {
     m_vertexBuffer = 0;
     m_indexBuffer = 0;
-    m_texture = 0;
+    m_textures = 0;
     m_model = 0;
 }
 
@@ -20,7 +20,7 @@ ModelClass::~ModelClass()
 {
 }
 
-bool ModelClass::Initialize(ID3D11Device* device, ID3D11DeviceContext* deviceContext, char* textureFileName, char* modelFileName)
+bool ModelClass::Initialize(ID3D11Device* device, ID3D11DeviceContext* deviceContext, char* modelFileName, char* textureFileName1, char* textureFileName2)
 {
     bool result;
     
@@ -39,7 +39,7 @@ bool ModelClass::Initialize(ID3D11Device* device, ID3D11DeviceContext* deviceCon
     }
     
     // 이 모델을 위해 텍스처 로드
-    result = LoadTexture(device, deviceContext, textureFileName);
+    result = LoadTextures(device, deviceContext, textureFileName1, textureFileName2);
     if (!result)
     {
         return false;
@@ -51,7 +51,7 @@ bool ModelClass::Initialize(ID3D11Device* device, ID3D11DeviceContext* deviceCon
 void ModelClass::Shutdown()
 {
     // 모델 텍스처 해제하기
-    ReleaseTexture();
+    ReleaseTextures();
     
     // 버택스 & 인덱스 버퍼 셧다운
     ShutdownBuffers();
@@ -75,9 +75,9 @@ int ModelClass::GetIndexCount()
     return m_indexCount;
 }
 
-ID3D11ShaderResourceView* ModelClass::GetTexture()
+ID3D11ShaderResourceView* ModelClass::GetTexture(int index)
 {
-    return m_texture->GetTexture();
+    return m_textures[index].GetTexture();
 }
 
 bool ModelClass::InitializeBuffers(ID3D11Device* device)
@@ -203,14 +203,20 @@ void ModelClass::RenderBuffers(ID3D11DeviceContext* deviceContext)
     return;
 }
 
-bool ModelClass::LoadTexture(ID3D11Device* device, ID3D11DeviceContext* deviceContext, char* fileName)
+bool ModelClass::LoadTextures(ID3D11Device* device, ID3D11DeviceContext* deviceContext, char* fileName1, char* fileName2)
 {
     bool result;
     
     // 택스처 객체 생성 및 초기화
-    m_texture = new TextureClass;
+    m_textures = new TextureClass[2];
     
-    result = m_texture->Initialize(device, deviceContext, fileName);
+    result = m_textures[0].Initialize(device, deviceContext, fileName1);
+    if (!result)
+    {
+        return false;
+    }
+    
+    result = m_textures[1].Initialize(device, deviceContext, fileName2);
     if (!result)
     {
         return false;
@@ -219,14 +225,16 @@ bool ModelClass::LoadTexture(ID3D11Device* device, ID3D11DeviceContext* deviceCo
     return true;
 }
 
-void ModelClass::ReleaseTexture()
+void ModelClass::ReleaseTextures()
 {
     // 텍스처 객체 해제
-    if (m_texture)
+    if (m_textures)
     {
-        m_texture->Shutdown();
-        delete m_texture;
-        m_texture = 0;
+        m_textures[0].Shutdown();
+        m_textures[1].Shutdown();
+        
+        delete[] m_textures;
+        m_textures = 0;
     }
 }
 

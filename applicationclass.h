@@ -8,15 +8,16 @@
 ///////////////////////
 #include "d3dclass.h"
 #include "cameraclass.h"
-// #include "modelclass.h"
+#include "modelclass.h"
 // #include "colorshaderclass.h"
 #include "textureshaderclass.h"
+#include "fontshaderclass.h"
+#include "multitextureshaderclass.h"
 // #include "lightshaderclass.h"
 // #include "lightclass.h"
 //#include "bitmapclass.h"
 #include "spriteclass.h"
 #include "timerclass.h"
-#include "fontshaderclass.h"
 #include "fontclass.h"
 #include "textclass.h"
 #include "fpsclass.h"
@@ -55,20 +56,21 @@ public:
 
 private:
 	bool Render(/*float*/);
-	bool UpdateFps();
-	bool UpdateMouseStrings(int, int, bool);
+	/*bool UpdateFps();
+	bool UpdateMouseStrings(int, int, bool);*/
 
 private:
 	D3DClass* m_Direct3D;
 	CameraClass* m_Camera;
-	// ModelClass* m_Model;
+	ModelClass* m_Model;
 	// ColorShaderClass* m_ColorShader;
 	// TextureShaderClass* m_TextureShader;
 	// LightShaderClass* m_LightShader;
 	// LightClass* m_Lights;
 	// int m_numLights;
 	// BitmapClass* m_Bitmap;
-	TextureShaderClass* m_TextureShader;
+	// TextureShaderClass* m_TextureShader;
+	MultiTextureShaderClass* m_MultiTextureShader;
 	SpriteClass* m_Sprite;
 	TimerClass* m_Timer;
 	
@@ -76,10 +78,10 @@ private:
 	XMMATRIX rotationMatrix;
 	XMMATRIX translationMatrix;
 	
-	FontShaderClass* m_FontShader;
-	FontClass* m_Font;
+	// FontShaderClass* m_FontShader;
+	// FontClass* m_Font;
 	// TextClass *m_TextString1, *m_TextString2;
-	FpsClass* m_Fps;
-	TextClass *m_FpsString, *m_MouseStrings;
-	int m_previousFps;
+	// FpsClass* m_Fps;
+	// TextClass *m_FpsString, *m_MouseStrings;
+	// int m_previousFps;
 };
