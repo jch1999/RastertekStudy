@@ -3,6 +3,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include "applicationclass.h"
 
+#include "lightshaderclass.h"
+
 
 ApplicationClass::ApplicationClass()
 {
@@ -14,7 +16,8 @@ ApplicationClass::ApplicationClass()
 	// m_LightShader = 0;
 	// m_Lights = 0;
 	// m_TextureShader = 0;
-	m_MultiTextureShader = 0;
+	// m_MultiTextureShader = 0;
+	m_LightMapShader = 0;
 	// m_Bitmap = 0;
 	m_Sprite = 0;
 	m_Timer = 0;
@@ -232,13 +235,23 @@ bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 		return false;
 	}*/
 	
-	// multitexture shader 객체를 생성하고 초기화한다.
+	/*// multitexture shader 객체를 생성하고 초기화한다.
 	m_MultiTextureShader = new MultiTextureShaderClass;
 	
 	result = m_MultiTextureShader->Initialize(m_Direct3D->GetDevice(), hwnd);
 	if (!result)
 	{
 		MessageBox(hwnd, L"Could not initialize the multitexture shader object.", L"Error", MB_OK);
+		return false;
+	}*/
+	
+	// light map shader 객체를 생성하고 초기화한다.
+	m_LightMapShader = new LightMapShaderClass;
+
+	result = m_LightMapShader->Initialize(m_Direct3D->GetDevice(), hwnd);
+	if(!result)
+	{
+		MessageBox(hwnd, L"Could not initialize the light map shader object.", L"Error", MB_OK);
 		return false;
 	}
 	
@@ -247,7 +260,8 @@ bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 	
 	// file name of the textures를 설정한다.
 	strcpy_s(textureFilename1, "data/stone01.tga");
-	strcpy_s(textureFilename2, "data/dirt01.tga");
+	// strcpy_s(textureFilename2, "data/dirt01.tga");
+	strcpy_s(textureFilename2, "data/light01.tga");
 	
 	// 모델 객체를 생성하고 초기화한다.
 	m_Model = new ModelClass;
@@ -374,12 +388,20 @@ void ApplicationClass::Shutdown()
 		m_Model = 0;
 	}
 	
-	// 멀티 텍스처 셰이더 객체를 해제한다.
+	/*// 멀티 텍스처 셰이더 객체를 해제한다.
 	if(m_MultiTextureShader)
 	{
 		m_MultiTextureShader->Shutdown();
 		delete m_MultiTextureShader;
 		m_MultiTextureShader = 0;
+	}*/
+	
+	// light map shader 객체를 해제한다.
+	if(m_LightMapShader)
+	{
+		m_LightMapShader->Shutdown();
+		delete m_LightMapShader;
+		m_LightMapShader = 0;
 	}
 	
 	// Camera 객체 해제
@@ -533,8 +555,10 @@ bool ApplicationClass::Render(/*float rotation*/)
 	// model using the multitexture shader를 렌더링한다.
 	m_Model->Render(m_Direct3D->GetDeviceContext());
 	
-	result = m_MultiTextureShader->Render(m_Direct3D->GetDeviceContext(), m_Model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix,
-										  m_Model->GetTexture(0), m_Model->GetTexture(1));
+	/*result = m_MultiTextureShader->Render(m_Direct3D->GetDeviceContext(), m_Model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix,
+										  m_Model->GetTexture(0), m_Model->GetTexture(1));*/
+	result = m_LightMapShader->Render(m_Direct3D->GetDeviceContext(), m_Model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix,
+									  m_Model->GetTexture(0), m_Model->GetTexture(1));
 	if(!result)
 	{
 		return false;
