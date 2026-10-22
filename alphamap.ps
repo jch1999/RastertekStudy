@@ -1,0 +1,48 @@
+////////////////////////////////////////////////////////////////////////////////
+// Filename: alphamap.ps
+////////////////////////////////////////////////////////////////////////////////
+
+/////////////
+// GLOBALS //
+/////////////
+Texture2D shaderTexture1 : register(t0);
+Texture2D shaderTexture2 : register(t1);
+Texture2D shaderTexture3 : register(t2);
+SamplerState SampleType : register(s0);
+
+//////////////
+// TYPEDEFS //
+//////////////
+struct PixelInputType
+{
+    float4 position : SV_POSITION;
+    float2 tex  : TEXCOORD0;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+// Pixel Shader
+////////////////////////////////////////////////////////////////////////////////
+float4 AlphaMapPixelShader(PixelInputType input) : SV_TARGET
+{
+    float4 color1;
+    float4 color2;
+    float4 alphaValue;
+    float4 blendColor;
+    
+    // 첫 번쩨 텍스처에서 픽셀색을 가져온다.
+    color1 = shaderTexture1.Sample(SampleType, input.tex);
+    
+    // 두 번쩨 텍스처에서 픽셀색을 가져온다.
+    color2 = shaderTexture2.Sample(SampleType, input.tex);
+    
+    // 알파 텍스처에서 픽셀색을 가져온다.
+    alphaValue = shaderTexture3.Sample(SampleType, input.tex);
+    
+    // 알파 값을 기준으로 두 텍스처르 합핀다.
+    blendColor = (alphaValue * color1) + ((1.0 - alphaValue) * color2);
+    
+    // 최종 색 값을 saturate(0~1로 클램프)한다.
+    blendColor = saturate(blendColor);
+    
+    return blendColor;
+}

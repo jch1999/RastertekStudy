@@ -13,7 +13,8 @@
 #include "textureshaderclass.h"
 #include "fontshaderclass.h"
 // #include "multitextureshaderclass.h"
-#include "lightmapshaderclass.h"
+// #include "lightmapshaderclass.h"
+#include "alphamapshaderclass.h"
 // #include "lightshaderclass.h"
 // #include "lightclass.h"
 //#include "bitmapclass.h"
@@ -72,7 +73,8 @@ private:
 	// BitmapClass* m_Bitmap;
 	// TextureShaderClass* m_TextureShader;
 	// MultiTextureShaderClass* m_MultiTextureShader;
-	LightMapShaderClass* m_LightMapShader;
+	// LightMapShaderClass* m_LightMapShader;
+	AlphaMapShaderClass* m_AlphaMapShader;
 	SpriteClass* m_Sprite;
 	TimerClass* m_Timer;
 	
