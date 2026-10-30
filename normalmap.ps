@@ -1,0 +1,71 @@
+////////////////////////////////////////////////////////////////////////////////
+// Filename: normalmap.ps
+////////////////////////////////////////////////////////////////////////////////
+
+/////////////
+// GLOBALS //
+/////////////
+Texture2D shaderTexture1 : register(t0);
+Texture2D shaderTexture2 : register(t1);
+SamplerState SampleType : register(s0);
+
+cbuffer LightBuffer
+{
+	float4 diffuseColor;
+	float3 lightDirection;
+	float padding;
+};
+
+//////////////
+// TYPEDEFS //
+//////////////
+struct PixelInputType
+{
+	float4 position : SV_POSITION;
+	float2 tex : TEXCOORD0;
+	float3 normal : NORMAL;
+	float3 tangent : TANGENT;
+	float3 binormal : BINORMAL;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+// Pixel Shader
+////////////////////////////////////////////////////////////////////////////////
+float4 NormalMapPixelShader(PixelInputType input) : SV_TARGET
+{
+	float4 textureColor;
+	float4 bumpMap;
+	float3 bumpNormal;
+	float3 lightDir;
+	float lightIntensity;
+	float4 color;
+
+	// 이 위치에서 색 텍스처로부터 픽셀색을 샘플한다.
+	textureColor = shaderTexture1.Sample(SampleType, input.tex);
+
+	// 노멀 맵에서 픽셀을 샘플한다.
+	bumpMap = shaderTexture2.Sample(SampleType, input.tex);
+
+	// 법선 값의 범위를 (0, +1)에서 (-1, +1)로 확장한다.
+	bumpMap = (bumpMap * 2.0f) - 1.0f;
+
+	// 노멀 맵의 데이터로부터 법선을 계산한다.
+	bumpNormal = (bumpMap.x * input.tangent) + (bumpMap.y * input.binormal) + (bumpMap.z * input.normal);
+
+	// 결과 범프 법선을 정규화한다.
+	bumpNormal = normalize(bumpNormal);
+
+	// 계산을 위해 빛 방향을 반전한다.
+	lightDir = -lightDirection;
+
+	// 노멀 맵 값을 기준으로 이 픽셀에 가해지는 빛의 양을 계산한다.
+	lightIntensity = saturate(dot(bumpNormal, lightDir));
+
+	// 디퓨즈 색과 빛의 세기를 결합해 최종 디퓨즈 색의 양을 정한다.
+	color = saturate(diffuseColor * lightIntensity);
+
+	// 최종 빛 색을 텍스처색과 결합한다.
+	color = color * textureColor;
+
+	return color;
+}

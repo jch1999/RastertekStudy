@@ -14,11 +14,12 @@ ApplicationClass::ApplicationClass()
 	// m_ColorShader = 0;
 	// m_TextureShader = 0;
 	// m_LightShader = 0;
-	// m_Lights = 0;
+	m_Light = 0;
 	// m_TextureShader = 0;
 	// m_MultiTextureShader = 0;
 	// m_LightMapShader = 0;
-	m_AlphaMapShader = 0;
+	// m_AlphaMapShader = 0;
+	m_NormalMapShader = 0;
 	// m_Bitmap = 0;
 	m_Sprite = 0;
 	m_Timer = 0;
@@ -44,7 +45,7 @@ ApplicationClass::~ApplicationClass()
 
 bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 {
-	char modelFileName[128], textureFileName1[128], textureFileName2[128], textureFileName3[128];
+	char modelFileName[128], textureFileName1[128], textureFileName2[128];
 	bool result;
 
 	// Direct3D 객체 생성 및 초기화
@@ -70,7 +71,7 @@ bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 	m_Camera->SetPosition(0.0f, 0.0f, -10.0f);
 	m_Camera->Render();
 	
-	// alpha map shader 객체를 생성하고 초기화한다.
+	/*// alpha map shader 객체를 생성하고 초기화한다.
 	m_AlphaMapShader = new AlphaMapShaderClass;
 	
 	result = m_AlphaMapShader->Initialize(m_Direct3D->GetDevice(), hwnd);
@@ -78,30 +79,52 @@ bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 	{
 		MessageBox(hwnd, L"Could not initialize the alpha map shdaer object.", L"Error", MB_OK);
 		return false;
+	}*/
+	
+	// 노멀 맵 셰이더 객체를 생성하고 초기화한다.
+	m_NormalMapShader = new NormalMapShaderClass;
+
+	result = m_NormalMapShader->Initialize(m_Direct3D->GetDevice(), hwnd);
+	if(!result)
+	{
+		MessageBox(hwnd, L"Could not initialize the normal map shader object.", L"Error", MB_OK);
+		return false;
 	}
 	
 	// 도델 파일 이름을 설정한다.
-	strcpy_s(modelFileName, "data/square.txt");
+	strcpy_s(modelFileName, "data/cube.txt");
 	
 	// file name of the textures를 설정한다.
 	strcpy_s(textureFileName1, "data/stone01.tga");
-	strcpy_s(textureFileName2, "data/dirt01.tga");
-	strcpy_s(textureFileName3, "data/alpha01.tga");
+	strcpy_s(textureFileName2, "data/normal01.tga");
 	
 	// 모델 객체를 생성하고 초기화한다.
 	m_Model = new ModelClass;
 
-	result = m_Model->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), modelFileName, textureFileName1, textureFileName2, textureFileName3);
+	result = m_Model->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), modelFileName, textureFileName1, textureFileName2);
 	if (!result)
 	{
 		return false;
 	}
 	
+	// 빛 객체를 생성하고 초기화한다.
+	m_Light = new LightClass;
+
+	m_Light->SetDiffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
+	m_Light->SetDirection(0.0f, 0.0f, 1.0f);
+
 	return true;
 }
 
 void ApplicationClass::Shutdown()
 {
+	// light 객체를 해제한다.
+	if(m_Light)
+	{
+		delete m_Light;
+		m_Light = 0;
+	}
+	
 	// model 객체 해제
 	if (m_Model)
 	{
@@ -110,13 +133,20 @@ void ApplicationClass::Shutdown()
 		m_Model = 0;
 	}
 	
-	// alpha map shader 객체를 해제한다.
+	// 노멀 맵 셰이더 객체를 해제한다.
+	if(m_NormalMapShader)
+	{
+		m_NormalMapShader->Shutdown();
+		delete m_NormalMapShader;
+		m_NormalMapShader = 0;
+	}
+	/*// alpha map shader 객체를 해제한다.
 	if (m_AlphaMapShader)
 	{
 		m_AlphaMapShader->Shutdown();
 		delete m_AlphaMapShader;
 		m_AlphaMapShader = 0;
-	}
+	}*/
 	
 	// Camera 객체 해제
 	if (m_Camera)
@@ -141,6 +171,8 @@ bool ApplicationClass::Frame(InputClass* Input)
 	// float frameTime;
 	bool result, mouseDown;
 	// int mouseX, mouseY;
+	
+	static float rotation = 360.0f;
 	
 	// 사용자가 종료를 원해 ESC를 눌렀는지 확인한다.
 	if(Input->IsEscapePressed())
@@ -188,7 +220,15 @@ bool ApplicationClass::Frame(InputClass* Input)
 	
 	// 그래픽 씬 랜더
 	// result = Render(rotation);
-	result = Render();
+	
+	// 큐브 회전값을 매 프레임 갱신.
+	rotation -= 0.0174532925f * 0.25f;
+	if(rotation <= 0.0f)
+	{
+		rotation += 360.0f;
+	}
+	
+	result = Render(rotation);
 	if (!result)
 	{
 		return false;
@@ -198,7 +238,7 @@ bool ApplicationClass::Frame(InputClass* Input)
 }
 
 
-bool ApplicationClass::Render(/*float rotation*/)
+bool ApplicationClass::Render(float rotation)
 {
 	//XMMATRIX worldMatrix, viewMatrix, projectionMatrix, srMatrix;
 	// XMFLOAT4 diffuseColor[4], lightPosition[4];
@@ -218,12 +258,14 @@ bool ApplicationClass::Render(/*float rotation*/)
 	m_Camera->GetViewMatrix(viewMatrix);
 	m_Direct3D->GetProjectionMatrix(projectionMatrix);
 	// m_Direct3D->GetOrthoMatrix(orthoMatrix);
+	// 모델이 회전하도록 월드 행렬을 회전 값으로 회전시킨다.
+	worldMatrix = XMMatrixRotationY(rotation);
 	
 	// model using the multitexture shader를 렌더링한다.
 	m_Model->Render(m_Direct3D->GetDeviceContext());
 	
-	result = m_AlphaMapShader->Render(m_Direct3D->GetDeviceContext(), m_Model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix,
-									  m_Model->GetTexture(0), m_Model->GetTexture(1), m_Model->GetTexture(2));
+	result = m_NormalMapShader->Render(m_Direct3D->GetDeviceContext(), m_Model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix,
+									  m_Model->GetTexture(0), m_Model->GetTexture(1), m_Light->GetDirection(), m_Light->GetDiffuseColor());
 	if(!result)
 	{
 		return false;

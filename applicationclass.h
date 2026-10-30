@@ -14,9 +14,10 @@
 #include "fontshaderclass.h"
 // #include "multitextureshaderclass.h"
 // #include "lightmapshaderclass.h"
-#include "alphamapshaderclass.h"
+// #include "alphamapshaderclass.h"
+#include "normalmapshaderclass.h"
 // #include "lightshaderclass.h"
-// #include "lightclass.h"
+#include "lightclass.h"
 //#include "bitmapclass.h"
 #include "spriteclass.h"
 #include "timerclass.h"
@@ -57,7 +58,7 @@ public:
 	bool Frame(InputClass*);
 
 private:
-	bool Render(/*float*/);
+	bool Render(float);
 	/*bool UpdateFps();
 	bool UpdateMouseStrings(int, int, bool);*/
 
@@ -68,13 +69,14 @@ private:
 	// ColorShaderClass* m_ColorShader;
 	// TextureShaderClass* m_TextureShader;
 	// LightShaderClass* m_LightShader;
-	// LightClass* m_Lights;
+	LightClass* m_Light;
 	// int m_numLights;
 	// BitmapClass* m_Bitmap;
 	// TextureShaderClass* m_TextureShader;
 	// MultiTextureShaderClass* m_MultiTextureShader;
 	// LightMapShaderClass* m_LightMapShader;
-	AlphaMapShaderClass* m_AlphaMapShader;
+	// AlphaMapShaderClass* m_AlphaMapShader;
+	NormalMapShaderClass* m_NormalMapShader;
 	SpriteClass* m_Sprite;
 	TimerClass* m_Timer;
 	
