@@ -19,7 +19,8 @@ ApplicationClass::ApplicationClass()
 	// m_MultiTextureShader = 0;
 	// m_LightMapShader = 0;
 	// m_AlphaMapShader = 0;
-	m_NormalMapShader = 0;
+	// m_NormalMapShader = 0;
+	m_SpecMapShader = 0;
 	// m_Bitmap = 0;
 	m_Sprite = 0;
 	m_Timer = 0;
@@ -45,7 +46,7 @@ ApplicationClass::~ApplicationClass()
 
 bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 {
-	char modelFileName[128], textureFileName1[128], textureFileName2[128];
+	char modelFileName[128], textureFileName1[128], textureFileName2[128], textureFileName3[128];
 	bool result;
 
 	// Direct3D 객체 생성 및 초기화
@@ -71,23 +72,13 @@ bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 	m_Camera->SetPosition(0.0f, 0.0f, -10.0f);
 	m_Camera->Render();
 	
-	/*// alpha map shader 객체를 생성하고 초기화한다.
-	m_AlphaMapShader = new AlphaMapShaderClass;
-	
-	result = m_AlphaMapShader->Initialize(m_Direct3D->GetDevice(), hwnd);
-	if (!result)
-	{
-		MessageBox(hwnd, L"Could not initialize the alpha map shdaer object.", L"Error", MB_OK);
-		return false;
-	}*/
-	
-	// 노멀 맵 셰이더 객체를 생성하고 초기화한다.
-	m_NormalMapShader = new NormalMapShaderClass;
+	// specular map shader 객체를 생성하고 초기화한다.
+	m_SpecMapShader = new SpecMapShaderClass;
 
-	result = m_NormalMapShader->Initialize(m_Direct3D->GetDevice(), hwnd);
+	result = m_SpecMapShader->Initialize(m_Direct3D->GetDevice(), hwnd);
 	if(!result)
 	{
-		MessageBox(hwnd, L"Could not initialize the normal map shader object.", L"Error", MB_OK);
+		MessageBox(hwnd, L"Could not initialize the specular map shader object.", L"Error", MB_OK);
 		return false;
 	}
 	
@@ -95,13 +86,14 @@ bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 	strcpy_s(modelFileName, "data/cube.txt");
 	
 	// file name of the textures를 설정한다.
-	strcpy_s(textureFileName1, "data/stone01.tga");
-	strcpy_s(textureFileName2, "data/normal01.tga");
+	strcpy_s(textureFileName1, "data/stone02.tga");
+	strcpy_s(textureFileName2, "data/normal02.tga");
+	strcpy_s(textureFileName3, "data/spec02.tga");
 	
 	// 모델 객체를 생성하고 초기화한다.
 	m_Model = new ModelClass;
 
-	result = m_Model->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), modelFileName, textureFileName1, textureFileName2);
+	result = m_Model->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), modelFileName, textureFileName1, textureFileName2, textureFileName3);
 	if (!result)
 	{
 		return false;
@@ -112,7 +104,9 @@ bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 
 	m_Light->SetDiffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
 	m_Light->SetDirection(0.0f, 0.0f, 1.0f);
-
+	m_Light->SetSpecularColor(1.0f, 1.0f, 1.0f, 1.0f);
+	m_Light->SetSpecularPower(2.0f);
+	
 	return true;
 }
 
@@ -133,20 +127,13 @@ void ApplicationClass::Shutdown()
 		m_Model = 0;
 	}
 	
-	// 노멀 맵 셰이더 객체를 해제한다.
-	if(m_NormalMapShader)
+	// specular map shader 객체를 해제한다.
+	if(m_SpecMapShader)
 	{
-		m_NormalMapShader->Shutdown();
-		delete m_NormalMapShader;
-		m_NormalMapShader = 0;
+		m_SpecMapShader->Shutdown();
+		delete m_SpecMapShader;
+		m_SpecMapShader = 0;
 	}
-	/*// alpha map shader 객체를 해제한다.
-	if (m_AlphaMapShader)
-	{
-		m_AlphaMapShader->Shutdown();
-		delete m_AlphaMapShader;
-		m_AlphaMapShader = 0;
-	}*/
 	
 	// Camera 객체 해제
 	if (m_Camera)
@@ -264,8 +251,9 @@ bool ApplicationClass::Render(float rotation)
 	// model using the multitexture shader를 렌더링한다.
 	m_Model->Render(m_Direct3D->GetDeviceContext());
 	
-	result = m_NormalMapShader->Render(m_Direct3D->GetDeviceContext(), m_Model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix,
-									  m_Model->GetTexture(0), m_Model->GetTexture(1), m_Light->GetDirection(), m_Light->GetDiffuseColor());
+	result = m_SpecMapShader->Render(m_Direct3D->GetDeviceContext(), m_Model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix,
+									  m_Model->GetTexture(0), m_Model->GetTexture(1), m_Model->GetTexture(2), m_Light->GetDirection(), m_Light->GetDiffuseColor(),
+									  m_Camera->GetPosition(), m_Light->GetSpecularColor(), m_Light->GetSpecularPower());
 	if(!result)
 	{
 		return false;

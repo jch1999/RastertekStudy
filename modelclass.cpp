@@ -20,7 +20,7 @@ ModelClass::~ModelClass()
 {
 }
 
-bool ModelClass::Initialize(ID3D11Device* device, ID3D11DeviceContext* deviceContext, char* modelFileName, char* textureFileName1, char* textureFileName2)
+bool ModelClass::Initialize(ID3D11Device* device, ID3D11DeviceContext* deviceContext, char* modelFileName, char* textureFileName1, char* textureFileName2, char* textureFileName3)
 {
     bool result;
     
@@ -42,7 +42,7 @@ bool ModelClass::Initialize(ID3D11Device* device, ID3D11DeviceContext* deviceCon
     }
     
     // 이 모델을 위해 텍스처 로드
-    result = LoadTextures(device, deviceContext, textureFileName1, textureFileName2);
+    result = LoadTextures(device, deviceContext, textureFileName1, textureFileName2, textureFileName3);
     if (!result)
     {
         return false;
@@ -208,7 +208,7 @@ void ModelClass::RenderBuffers(ID3D11DeviceContext* deviceContext)
     return;
 }
 
-bool ModelClass::LoadTextures(ID3D11Device* device, ID3D11DeviceContext* deviceContext, char* fileName1, char* fileName2)
+bool ModelClass::LoadTextures(ID3D11Device* device, ID3D11DeviceContext* deviceContext, char* fileName1, char* fileName2, char* fileName3)
 {
     bool result;
     
@@ -222,6 +222,12 @@ bool ModelClass::LoadTextures(ID3D11Device* device, ID3D11DeviceContext* deviceC
     }
     
     result = m_textures[1].Initialize(device, deviceContext, fileName2);
+    if (!result)
+    {
+        return false;
+    }
+    
+    result = m_textures[2].Initialize(device, deviceContext, fileName3);
     if (!result)
     {
         return false;
