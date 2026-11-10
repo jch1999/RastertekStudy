@@ -81,7 +81,7 @@ float4 SpecMapPixelShader(PixelInputType input) : SV_TARGET
 		reflection = normalize(2 * lightIntensity * bumpNormal - lightDir);
 
 		// 반사 벡터, 시선 방향, specular power를 이용해 스페큘러 광량을 구한다.
-		specular = pow(saturate(dot(reflection, input.viewDirection)), specularPower);
+		specular = specularColor * pow(saturate(dot(reflection, input.viewDirection)), specularPower);
 		// 스페큘러 맵으로 이 픽셀에서의 스페큘러 세기를 결정한다.
 		specular = specular * specularIntensity;
 
