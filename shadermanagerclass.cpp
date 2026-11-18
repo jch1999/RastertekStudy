@@ -6,6 +6,7 @@ ShaderManagerClass::ShaderManagerClass()
     m_LightShader = 0;
     m_NormalMapShader = 0;
     m_SpecMapShader = 0;
+    m_FontShader = 0;
 }
 
 ShaderManagerClass::ShaderManagerClass(const ShaderManagerClass&)
@@ -55,12 +56,29 @@ bool ShaderManagerClass::Initialize(ID3D11Device* device, HWND hwnd)
     {
         return false;
     }
+    
+    //  폰트 맵 셰이더 객체를 생성하고 초기화한다.
+    m_FontShader = new FontShaderClass;
+
+    result = m_FontShader->Initialize(device, hwnd);
+    if(!result)
+    {
+        return false;
+    }
 
     return true;
 }
 
 void ShaderManagerClass::Shutdown()
 {
+    // 폰트 셰이더 객체를 해제한다.
+    if(m_FontShader)
+    {
+        m_FontShader->Shutdown();
+        delete m_FontShader;
+        m_FontShader = 0;
+    }
+    
     // 스페큘러 맵 셰이더 객체를 해제한다.
     if(m_SpecMapShader)
     {
@@ -146,6 +164,20 @@ bool ShaderManagerClass::RenderSpecMapShader(ID3D11DeviceContext* deviceContext,
     
     result = m_SpecMapShader->Render(deviceContext, indexCount, worldMatrix, viewMatrix, projectionMatrix, colorTexture, normalTexture, specularTexture,
         lightDirection, diffuseColor,cameraPosition, specularColor, specularPower);
+    if(!result)
+    {
+        return false;
+    }
+
+    return true;
+}
+
+bool ShaderManagerClass::RenderFontShader(ID3D11DeviceContext* deviceContext, int indexCount, XMMATRIX worldMatrix, XMMATRIX viewMatrix, XMMATRIX projectionMatrix,
+    ID3D11ShaderResourceView* texture, XMFLOAT4 pixelColor)
+{
+    bool result;
+    
+    result = m_FontShader->Render(deviceContext, indexCount, worldMatrix, viewMatrix, projectionMatrix, texture, pixelColor);
     if(!result)
     {
         return false;

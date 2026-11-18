@@ -12,6 +12,12 @@
 #include "lightclass.h"
 #include "inputclass.h"
 #include "shadermanagerclass.h"
+#include "fontclass.h"
+#include "textclass.h"
+#include "modellistclass.h"
+#include "timerclass.h"
+#include "positionclass.h"
+#include "frustumclass.h"
 
 //////////////
 // INCLUDES //
@@ -42,7 +48,8 @@ public:
 	bool Frame(InputClass*);
 
 private:
-	bool Render(float);
+	bool Render(/*float*/);
+	bool UpdateRenderCountString(int);
 
 private:
 	D3DClass* m_Direct3D;
@@ -50,4 +57,12 @@ private:
 	ModelClass* m_Model;
 	LightClass* m_Light;
 	ShaderManagerClass* m_ShaderManager;
+	FontClass* m_Font;
+	
+	TextClass* m_RenderCountString;
+	ModelListClass* m_ModelList;
+	TimerClass* m_Timer;
+	PositionClass* m_Position;
+	FrustumClass* m_Frustum;
+	XMMATRIX m_baseViewMatrix;
 };

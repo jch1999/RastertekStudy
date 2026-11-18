@@ -10,6 +10,7 @@
 #include "lightshaderclass.h"
 #include "normalmapshaderclass.h"
 #include "specmapshaderclass.h"
+#include "fontShaderClass.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 // Class name: ShaderManagerClass
@@ -27,10 +28,12 @@ public:
     bool RenderLightShader(ID3D11DeviceContext*, int, XMMATRIX, XMMATRIX, XMMATRIX, ID3D11ShaderResourceView*, XMFLOAT3, XMFLOAT4);
     bool RenderNormalMapShader(ID3D11DeviceContext*, int, XMMATRIX, XMMATRIX, XMMATRIX, ID3D11ShaderResourceView*, ID3D11ShaderResourceView*, XMFLOAT3, XMFLOAT4);
     bool RenderSpecMapShader(ID3D11DeviceContext*, int, XMMATRIX, XMMATRIX, XMMATRIX, ID3D11ShaderResourceView*, ID3D11ShaderResourceView*, ID3D11ShaderResourceView*, XMFLOAT3, XMFLOAT4, XMFLOAT3, XMFLOAT4, float);
-   
+    bool RenderFontShader(ID3D11DeviceContext*, int, XMMATRIX, XMMATRIX, XMMATRIX, ID3D11ShaderResourceView*, XMFLOAT4);
+    
 private:
     TextureShaderClass* m_TextureShader;
     LightShaderClass* m_LightShader;
     NormalMapShaderClass* m_NormalMapShader;
     SpecMapShaderClass* m_SpecMapShader;
+    FontShaderClass* m_FontShader;
 };
